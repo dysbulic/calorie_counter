@@ -1,0 +1,20 @@
+body {
+    margin-top: 5em;
+}
+
+table {
+    width: 100%;
+}
+
+th, td {
+    border: 1px solid gray;
+    padding: .25em 1em;
+}
+
+#total {
+    text-align: right;
+}
+
+#total:before {
+    content: 'Total:';
+}

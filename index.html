@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+  <head>
+    <title>Freebase Calorie Counter</title>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+    <script type="text/javascript" src="//twitter.github.com/bootstrap/assets/js/bootstrap.js"></script>
+    <link rel="stylesheet" href="//twitter.github.io/bootstrap/assets/css/bootstrap.css"/>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+  </head>
+  <body>
+    <a href="//github.com/wholcomb/calorie_counter/">
+      <img style="position: absolute; top: 0; right: 0; border: 0;" src="//s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub"/>
+    </a>
+    <a data-toggle="modal" href="#infoModal">
+      <img style="position: absolute; top: 10px; left: 10px; border: 0; width: 70px;" src="//dhappy.org/.../image/icon/info/" alt="Info"/>
+    </a>
+    <div class="container">
+      <div class="row-fluid">
+        <div class="span12">
+          <table id="recipe">
+            <tr><th>Ingredient</th><th>Quantity</th><th>Calories</th></tr>
+            <tr><td id="total" colspan="3"></td></tr>
+          </table>
+        </div>
+      </div>
+      <div id="errors" class="row-fluid"></div>
+    </div>
+
+    <!-- From: http://jsfiddle.net/9RcDN/ -->
+    <div id="infoModal" class="modal hide fade" style="display: none; ">
+      <div class="modal-header">
+        <button class="close" data-dismiss="modal">×</button>
+        <h3>Calorie Counter</h3>
+      </div>
+      <div class="modal-body">
+        <p>A recipe builder using <a href="//freebase.com">Freebase</a>.</p>
+      </div>
+    </div>
+
+    <script type="text/javascript" src="simpleSignaling.js"></script>
+    <script type="text/javascript" src="examples/wall.js"></script>
+
+    <script type="text/javascript">
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      
+      ga('create', 'UA-42087393-3', 'wholcomb.github.io');
+      ga('send', 'pageview');
+    </script>
+  </body>
+</html>
