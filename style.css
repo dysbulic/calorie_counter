@@ -1,3 +1,5 @@
+@import url('icons.css');
+
 body {
     margin-top: 5em;
 }
@@ -43,10 +45,13 @@ th, td {
 
 .icon {
     width: 5%;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 75% 75%;
 }
 
-/* [@id='/en/tomato'], */ #Tomato {
-    background-image: url('//dhappy.org/.../image/vegetable/tomato/');
+.loading {
+    background-image: url('//dhappy.org/.../image/icon/loading/');
     background-repeat: no-repeat;
     background-position: center;
 }
