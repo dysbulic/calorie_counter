@@ -1,30 +1,34 @@
 $( function() {
 
-    var $calories = $('<input/>').attr( { type: 'text' } )
-    var $kj = $('<td/>')
-    var $ingredient = $('<tr/>').addClass( 'ingredient' )
-    var $icon = $('<td/>').addClass( 'icon' )
-    var $quantity = $('<input/>').attr( { type: 'text' } )
+    function Row() {
+        this.$elem = $('<tr/>').addClass( 'ingredient' )
+        var $calories = $('<input/>').attr( { type: 'text' } )
+        var $kj = $('<td/>')
+        var $icon = $('<td/>').addClass( 'icon' )
+        var $quantity = $('<input/>').attr( { type: 'text' } )
+        
+        var $units = $('<select/>')
+        $.ajax( {
+            dataType: 'json',
+            url: 'units.json',
+            async: false,
+            success: function( units ) {
+                options = ''
+                $.each( units, function( typeName, type ) {
+                    var $type = $('<optgroup/>').attr( { label: typeName } )
+                    $units.append( $type )
+                    $.each( type, function( name, abbreviation ) {
+                        $type.append( $('<option/>').val( abbreviation ).text( name ) )
+                    } )
+                        } )
+                    }
+        } )
 
-    var $units = $('<select/>')
-    $.ajax( {
-        dataType: 'json',
-        url: 'units.json',
-        async: false,
-        success: function( units ) {
-            options = ''
-            $.each( units, function( typeName, type ) {
-                var $type = $('<optgroup/>').attr( { label: typeName } )
-                $units.append( $type )
-                $.each( type, function( name, abbreviation ) {
-                    $type.append( $('<option/>').val( abbreviation ).text( name ) )
-                } )
-            } )
-        }
-    } )
-
-    $('#recipe tbody').prepend(
-        $ingredient
+        $units.change( function() {
+            $quantity.keyup()
+        } )
+        
+        this.$elem
             .append( $icon )
             .append(
                 $('<td/>').append(
@@ -35,16 +39,16 @@ $( function() {
                         } )
                         .bind( 'fb-select', function( evt, data ) {
                             $icon.attr( { id: data.name } )
-
+                            
                             var query = {
                                 id: data.id,
                                 '/food/food/energy': null
                             }
-
+                            
                             // From: https://developers.google.com/freebase/v1/mql-overview#mql-readwrite-documentation
                             var fb_url = 'https://www.googleapis.com/freebase/v1/mqlread'
                             fb_url += "?query=" + encodeURIComponent( JSON.stringify( query ) )
-
+                            
                             $.getJSON( fb_url,
                                        function( response ) {
                                            $kj.text( response.result['/food/food/energy'] )
@@ -69,9 +73,11 @@ $( function() {
             .append(
                 $('<td/>').append(
                     $calories
-                ) ) )
+                ) )
+        return this
+    }
 
-    $units.change( function() {
-        $quantity.keyup()
-    } )
+    $('#recipe tbody').prepend( ( new Row() ).$elem )
+    $('#recipe tbody').prepend( ( new Row() ).$elem )
 } )
+   
