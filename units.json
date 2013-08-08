@@ -1,6 +1,7 @@
 {
     "weights": {
         "ounce": "oz",
+        "gram": "g",
         "pound": "lb"
     },
     "volumes": {

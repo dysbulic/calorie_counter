@@ -4,6 +4,7 @@ $( function() {
     var $kj = $('<td/>')
     var $ingredient = $('<tr/>').addClass( 'ingredient' )
     var $icon = $('<td/>').addClass( 'icon' )
+    var $quantity = $('<input/>').attr( { type: 'text' } )
 
     var $units = $('<select/>')
     $.ajax( {
@@ -16,7 +17,7 @@ $( function() {
                 var $type = $('<optgroup/>').attr( { label: typeName } )
                 $units.append( $type )
                 $.each( type, function( name, abbreviation ) {
-                    $type.append( $('<option/>').val( name ).text( name ) )
+                    $type.append( $('<option/>').val( abbreviation ).text( name ) )
                 } )
             } )
         }
@@ -46,18 +47,21 @@ $( function() {
 
                             $.getJSON( fb_url,
                                        function( response ) {
-                                           console.log( response.result )
                                            $kj.text( response.result['/food/food/energy'] )
+                                           $quantity.keyup()
                                        } )
                         } ) ) )
             .append(
                 $('<td/>')
                     .addClass( 'quantity' )
                     .append(
-                        $('<input/>').attr( { type: 'text' } )
+                        $quantity
                             .numeric()
                             .keyup( function() {
-                                $calories.val( $(this).val() )
+                                var toGrams = new UnitConverter( $(this).val(), $units.val() )
+                                var toCalories = new UnitConverter(
+                                    toGrams.as( 'g' ).val() * ( $kj.text() / 100 ), 'kJ' )
+                                $calories.val( toCalories.as( 'kcal' ).val() )
                             } )
                     )
                     .append( $units ) )
@@ -66,4 +70,8 @@ $( function() {
                 $('<td/>').append(
                     $calories
                 ) ) )
+
+    $units.change( function() {
+        $quantity.keyup()
+    } )
 } )
