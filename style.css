@@ -20,6 +20,7 @@ th, td {
 }
 
 .ingredient input {
+    text-indent: .5em;
     padding: 0;
     margin: 0;
     width: 100%;
@@ -27,5 +28,15 @@ th, td {
 }
 
 .ingredient td {
-    padding: 0;
+    padding: .25em .5em;
+}
+
+.quantity input[type='text'] {
+    width: 70%;
+    margin-right: 5%;
+}
+
+.quantity select {
+    width: 25%;
+    margin: 0;
 }

@@ -1,0 +1,11 @@
+{
+    "weights": {
+        "ounce": "oz",
+        "pound": "lb"
+    },
+    "volumes": {
+        "ounce": "oz",
+        "liter": "l"
+    }
+}
+        
