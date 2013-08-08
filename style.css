@@ -40,3 +40,13 @@ th, td {
     width: 25%;
     margin: 0;
 }
+
+.icon {
+    width: 5%;
+}
+
+/* [@id='/en/tomato'], */ #Tomato {
+    background-image: url('//dhappy.org/.../image/vegetable/tomato/');
+    background-repeat: no-repeat;
+    background-position: center;
+}

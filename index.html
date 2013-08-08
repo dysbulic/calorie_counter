@@ -13,7 +13,7 @@
     <link rel="stylesheet" type="text/css" href="style.css" />
   </head>
   <body>
-    <a href="//github.com/wholcomb/calorie_counter/">
+    <a href="//github.com/wholcomb/calorie_counter/tree/gh-pages/">
       <img style="position: absolute; top: 0; right: 0; border: 0;" src="//s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub"/>
     </a>
     <a data-toggle="modal" href="#infoModal">
@@ -24,10 +24,10 @@
         <div class="span12">
           <table id="recipe">
             <thead>
-              <tr><th>Ingredient</th><th>Quantity</th><th>Calories</th></tr>
+              <tr><th class="icon"></th><th>Ingredient</th><th>Quantity</th><th title="Kilojoules per 100 grams">kJ / 100g</th><th>Calories</th></tr>
             </thead>
             <tbody>
-              <tr><td id="total" colspan="3"></td></tr>
+              <tr><td id="total" colspan="5"></td></tr>
             </tbody>
           </table>
         </div>
@@ -46,6 +46,7 @@
       </div>
     </div>
 
+    <script type="text/javascript" src="converter.js"></script>
     <script type="text/javascript" src="ui.js"></script>
 
     <script type="text/javascript">

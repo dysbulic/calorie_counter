@@ -1,6 +1,10 @@
 $( function() {
 
     var $calories = $('<input/>').attr( { type: 'text' } )
+    var $kj = $('<td/>')
+    var $ingredient = $('<tr/>').addClass( 'ingredient' )
+    var $icon = $('<td/>').addClass( 'icon' )
+
     var $units = $('<select/>')
     $.ajax( {
         dataType: 'json',
@@ -19,8 +23,8 @@ $( function() {
     } )
 
     $('#recipe tbody').prepend(
-        $('<tr/>')
-            .addClass( 'ingredient' )
+        $ingredient
+            .append( $icon )
             .append(
                 $('<td/>').append(
                     $('<input/>').attr( { type: 'text' } )
@@ -29,21 +33,21 @@ $( function() {
                             filter: '(all type:/food/ingredient)'
                         } )
                         .bind( 'fb-select', function( evt, data ) {
-                            var envelope = {
-                                query : {
-                                    id: data.id,
-                                    '/food/food/energy': null
-                                }
+                            $icon.attr( { id: data.name } )
+
+                            var query = {
+                                id: data.id,
+                                '/food/food/energy': null
                             }
 
-                            console.log( envelope )
-                            $.getJSON( 'http://api.freebase.com/api/service/mqlread?callback=?',
-                                       { query: JSON.stringify( envelope ) },
+                            // From: https://developers.google.com/freebase/v1/mql-overview#mql-readwrite-documentation
+                            var fb_url = 'https://www.googleapis.com/freebase/v1/mqlread'
+                            fb_url += "?query=" + encodeURIComponent( JSON.stringify( query ) )
+
+                            $.getJSON( fb_url,
                                        function( response ) {
-                                           console.log( response )
-                                           if( response.code == '/api/status/ok' && response.result ) {
-                                               console.log( response.result )
-                                           }
+                                           console.log( response.result )
+                                           $kj.text( response.result['/food/food/energy'] )
                                        } )
                         } ) ) )
             .append(
@@ -57,6 +61,7 @@ $( function() {
                             } )
                     )
                     .append( $units ) )
+            .append( $kj )
             .append(
                 $('<td/>').append(
                     $calories
