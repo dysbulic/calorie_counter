@@ -18,3 +18,14 @@ th, td {
 #total:before {
     content: 'Total:';
 }
+
+.ingredient input {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    border: none;
+}
+
+.ingredient td {
+    padding: 0;
+}
