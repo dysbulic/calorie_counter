@@ -1,6 +1,4 @@
-calorie_counter
+Freebase Calorie Counter
 ===============
 
-Freebase Calorie Counter
-
-Primary development is in the gh-pages branch.
+[Online](//wholcomb.github.io/calorie_counter)
