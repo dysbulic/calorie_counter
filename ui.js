@@ -23,8 +23,8 @@ $( function() {
                     $.each( type, function( name, abbreviation ) {
                         $type.append( $('<option/>').val( abbreviation ).text( name ) )
                     } )
-                        } )
-                    }
+                } )
+            }
         } )
 
         $units.change( function() {
@@ -71,6 +71,7 @@ $( function() {
                                 var toCalories = new UnitConverter(
                                     toGrams.as( 'g' ).val() * ( $kj.text() / 100 ), 'kJ' )
                                 row.$calories.text( toCalories.as( 'kcal' ).val() )
+                                row.$calories.change()
                             } )
                     )
                     .append( $units ) )
@@ -95,7 +96,18 @@ $( function() {
         } )
 
         row.$calories.change( function() {
-            console.log( arguments )
+            var calories = rows.map( function( row ) {
+                var val = parseFloat( row.$calories.text() )
+                if( ! isNaN( val ) ) {
+                    return val
+                } else {
+                    return 0
+                }
+            } )
+            var sum = calories.reduce( function( a, b ) { return a + b } )
+            $('#total').text( sum )
+            
+            console.log( calories )
         } )
 
         rows.push( row )
