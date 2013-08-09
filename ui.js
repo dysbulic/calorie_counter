@@ -56,8 +56,13 @@ $( function() {
                             $.getJSON( fb_url,
                                        function( response ) {
                                            $kj.removeClass( 'loading' )
-                                           $kj.text( response.result['/food/food/energy'] )
-                                           $quantity.keyup()
+                                           var kjs = response.result['/food/food/energy']
+                                           if( kjs == null ) {
+                                               $kj.text( '?' )
+                                           } else {
+                                               $kj.text( kjs )
+                                               $quantity.keyup()
+                                           }
                                        } )
                         } ) ) )
             .append(
@@ -67,11 +72,14 @@ $( function() {
                         $quantity
                             .numeric()
                             .keyup( function() {
-                                var toGrams = new UnitConverter( $(this).val(), $units.val() )
-                                var toCalories = new UnitConverter(
-                                    toGrams.as( 'g' ).val() * ( $kj.text() / 100 ), 'kJ' )
-                                row.$calories.text( toCalories.as( 'kcal' ).val() )
-                                row.$calories.change()
+                                var kjs = $kj.text()
+                                if( kjs != '?' ) {
+                                    var toGrams = new UnitConverter( $(this).val(), $units.val() )
+                                    var toCalories = new UnitConverter(
+                                        toGrams.as( 'g' ).val() * ( kjs / 100 ), 'kJ' )
+                                    row.$calories.text( Math.round( toCalories.as( 'kcal' ).val() ) )
+                                    row.$calories.change()
+                                }
                             } )
                     )
                     .append( $units ) )
@@ -104,10 +112,8 @@ $( function() {
                     return 0
                 }
             } )
-            var sum = calories.reduce( function( a, b ) { return a + b } )
+            var sum = calories.reduce( function( current, previous ) { return current + previous } )
             $('#total').text( sum )
-            
-            console.log( calories )
         } )
 
         rows.push( row )

@@ -18,7 +18,7 @@ th, td {
 }
 
 #total:before {
-    content: 'Total:';
+    content: 'Total: ';
 }
 
 .ingredient input {
