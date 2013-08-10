@@ -1,12 +1,18 @@
 {
-    "weights": {
-        "ounce": "oz",
-        "gram": "g",
-        "pound": "lb"
+    "weight": {
+        "ounces": "/en/ounce",
+        "grams": "/en/gram",
+        "pounds": "/en/pound"
     },
-    "volumes": {
-        "ounce": "oz",
-        "liter": "l"
+    "volume": {
+        "ounces": "/en/fluid_ounce_us",
+        "cups": "/en/cup_us",
+        "pints": "/en/pint_us",
+        "quarts": "/en/quart_us",
+        "teaspoons": "/en/teaspoon",
+        "tablespoons": "/en/tablespoon",
+        "liters": "/en/liter",
+        "dashes": "/m/05v6545",
+        "pinches": "/wikipedia/bg_id/129108"
     }
 }
-        

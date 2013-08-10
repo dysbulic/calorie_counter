@@ -7,6 +7,57 @@ $( function() {
         $.getJSON( fb_url, handler )
     }
 
+    var $units
+    function get_$units() {
+        if( $units == undefined ) {
+            $units = $('<select/>')
+            $.ajax( {
+                dataType: 'json',
+                url: 'units.json',
+                async: false,
+                success: function( categories ) {
+                    options = ''
+                    $.each( categories, function( type, units ) {
+                        var $type = $('<optgroup/>').attr( { label: type } )
+                        $units.append( $type )
+                        
+                        var ids = []
+                        $.each( units, function( name, id ) {
+                            $type.append(
+                                $('<option/>').addClass( type ).val( id ).text( name ) )
+                            ids.push( id )
+                        } )
+                            
+                        var query = [{
+                            'id|=': ids,
+                            id: null
+                        }]
+                        if( type == "weight" ) {
+                            query[0]['/measurement_unit/mass_unit/weightmass_in_kilograms'] = null
+                            freebase_query(
+                                query,
+                                function( response ) {
+                                    $.each( response.result, function( index, result ) {
+                                        UnitConverter.addUnit( 'g', result.id, result['/measurement_unit/mass_unit/weightmass_in_kilograms'] * 1000 )
+                                    } )
+                                } )
+                        } else if( type == "volume" ) {
+                            query[0]['/measurement_unit/volume_unit/volume_in_cubic_meters'] = null
+                            freebase_query(
+                                query,
+                                function( response ) {
+                                    $.each( response.result, function( index, result ) {
+                                        UnitConverter.addUnit( 'cc', result.id, result['/measurement_unit/volume_unit/volume_in_cubic_meters'] * 1000 )
+                                    } )
+                                } )
+                        }
+                    } )
+                }
+            } )
+        }
+        return $units.clone()
+    }
+    
     $('#recipe')
         .suggest( {
             key: 'AIzaSyDqk53HcVbo2dP8ULc1qANB9Iejr7iXZOg',
@@ -39,22 +90,7 @@ $( function() {
         
         var row = this
 
-        var $units = $('<select/>')
-        $.ajax( {
-            dataType: 'json',
-            url: 'units.json',
-            async: false,
-            success: function( units ) {
-                options = ''
-                $.each( units, function( typeName, type ) {
-                    var $type = $('<optgroup/>').attr( { label: typeName } )
-                    $units.append( $type )
-                    $.each( type, function( name, abbreviation ) {
-                        $type.append( $('<option/>').val( abbreviation ).text( name ) )
-                    } )
-                } )
-            }
-        } )
+        var $units = get_$units()
 
         $units.change( function() {
             $quantity.keyup()
@@ -99,11 +135,10 @@ $( function() {
                         $quantity
                             .numeric()
                             .keyup( function() {
-                                var kjs = $kj.text()
-                                if( kjs != '?' ) {
-                                    var toGrams = new UnitConverter( $(this).val(), $units.val() )
-                                    var toCalories = new UnitConverter(
-                                        toGrams.as( 'g' ).val() * ( kjs / 100 ), 'kJ' )
+                                var kjs = row.kJs
+                                if( kjs != undefined ) {
+                                    var grams = ( new UnitConverter( $(this).val(), $units.val() ) ).as( 'g' ).val()
+                                    var toCalories = new UnitConverter( grams * ( kjs / 100 ), 'kJ' )
                                     row.$calories.text( Math.round( toCalories.as( 'kcal' ).val() ) )
                                     row.$calories.change()
                                 }
@@ -112,6 +147,14 @@ $( function() {
                     .append( $units ) )
             .append( $kj )
             .append( this.$calories )
+
+        this.__defineGetter__( 'kJs', function() {
+            var kjs = $kj.text()
+            if( kjs == '?' ) {
+                return undefined
+            }
+            return kjs
+        } )
         return this
     }
 
@@ -148,4 +191,3 @@ $( function() {
 
     addRow()
 } )
-   
