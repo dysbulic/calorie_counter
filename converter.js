@@ -22,7 +22,16 @@
     UnitConverter.prototype.val = function () {
         // first, convert from the current value to the base unit
         var target = table[this.targetUnit]
+        
+        if( target == undefined ) {
+            throw new Error("No entry for: " + this.targetUnit )
+        }
+
         var current = table[this.currentUnit]
+
+        if( current == undefined ) {
+            throw new Error("No entry for: " + this.currentUnit )
+        }
 
         var value = this.value * ( current.multiplier / target.multiplier )
 
@@ -48,6 +57,7 @@
 
     UnitConverter.addUnit = function ( baseUnit, actualUnit, multiplier ) {
         table[actualUnit] = { base: baseUnit, actual: actualUnit, multiplier: multiplier }
+        table[baseUnit] = { base: actualUnit, actual: baseUnit, multiplier: 1 / multiplier }
     }
 
     var prefixes = ['Y', 'Z', 'E', 'P', 'T', 'G', 'M', 'k', 'h', 'da', '', 'd', 'c', 'm', 'u', 'n', 'p', 'f', 'a', 'z', 'y']

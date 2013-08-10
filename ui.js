@@ -17,41 +17,39 @@ $( function() {
                 async: false,
                 success: function( categories ) {
                     options = ''
+                    var ids = []
                     $.each( categories, function( type, units ) {
                         var $type = $('<optgroup/>').attr( { label: type } )
                         $units.append( $type )
                         
-                        var ids = []
                         $.each( units, function( name, id ) {
                             $type.append(
                                 $('<option/>').addClass( type ).val( id ).text( name ) )
                             ids.push( id )
                         } )
-                            
-                        var query = [{
-                            'id|=': ids,
-                            id: null
-                        }]
-                        if( type == "weight" ) {
-                            query[0]['/measurement_unit/mass_unit/weightmass_in_kilograms'] = null
-                            freebase_query(
-                                query,
-                                function( response ) {
-                                    $.each( response.result, function( index, result ) {
-                                        UnitConverter.addUnit( 'g', result.id, result['/measurement_unit/mass_unit/weightmass_in_kilograms'] * 1000 )
-                                    } )
-                                } )
-                        } else if( type == "volume" ) {
-                            query[0]['/measurement_unit/volume_unit/volume_in_cubic_meters'] = null
-                            freebase_query(
-                                query,
-                                function( response ) {
-                                    $.each( response.result, function( index, result ) {
-                                        UnitConverter.addUnit( 'cc', result.id, result['/measurement_unit/volume_unit/volume_in_cubic_meters'] * 1000 )
-                                    } )
-                                } )
-                        }
                     } )
+                        
+                    var query = [{
+                        'id|=': ids,
+                        id: null,
+                        '/measurement_unit/mass_unit/weightmass_in_kilograms': null,
+                        '/measurement_unit/volume_unit/volume_in_cubic_meters': null
+                    }]
+                    freebase_query(
+                        query,
+                        function( response ) {
+                            $.each( response.result, function( index, result ) {
+                                var multiplier = result['/measurement_unit/mass_unit/weightmass_in_kilograms']
+                                if( multiplier != null ) {
+                                        UnitConverter.addUnit( 'g', result.id, multiplier * 1000 )
+                                }
+                                multiplier = result['/measurement_unit/volume_unit/volume_in_cubic_meters']
+                                if( multiplier != null ) {
+                                        UnitConverter.addUnit( 'cc', result.id, multiplier * 1000000 )
+                                }
+                            } )
+                        }
+                    )
                 }
             } )
         }
@@ -137,7 +135,14 @@ $( function() {
                             .keyup( function() {
                                 var kjs = row.kJs
                                 if( kjs != undefined ) {
-                                    var grams = ( new UnitConverter( $(this).val(), $units.val() ) ).as( 'g' ).val()
+                                    var grams
+                                    if( $units.find(":selected").hasClass( 'volume' ) ) {
+                                        var ccs = ( new UnitConverter( $(this).val(), $units.val() ) ).as( 'cc' ).val()
+                                        var density = 1
+                                        grams = ccs * density
+                                    } else {
+                                        grams = ( new UnitConverter( $(this).val(), $units.val() ) ).as( 'g' ).val()
+                                    }
                                     var toCalories = new UnitConverter( grams * ( kjs / 100 ), 'kJ' )
                                     row.$calories.text( Math.round( toCalories.as( 'kcal' ).val() ) )
                                     row.$calories.change()
