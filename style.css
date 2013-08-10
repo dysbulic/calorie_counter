@@ -55,3 +55,7 @@ th, td {
     background-repeat: no-repeat;
     background-position: center;
 }
+
+.kj, .calories {
+    text-align: center;
+}

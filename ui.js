@@ -95,11 +95,11 @@ $( function() {
     function Row() {
         this.$elem = $('<tr/>').addClass( 'ingredient' )
         this.$suggest = $('<input/>').attr( { type: 'text' } )
-        this.$calories = $('<td/>')
+        this.$calories = $('<td/>').addClass( 'calories' )
         this.$quantity = $('<input/>').attr( { type: 'text' } )
         this.$units = get_$units()
 
-        var $kj = $('<td/>')
+        var $kj = $('<td/>').addClass( 'kj' )
         var $icon = $('<td/>').addClass( 'icon' )
         
         var row = this
@@ -131,13 +131,7 @@ $( function() {
                                 function( response ) {
                                     $kj.removeClass( 'loading' )
 
-                                    var kjs = response.result['/food/food/energy']
-                                    if( kjs == null ) {
-                                        $kj.text( '?' )
-                                    } else {
-                                        $kj.text( kjs )
-                                        this.$quantity.keyup()
-                                    }
+                                    this.kjs = response.result['/food/food/energy']
                                 } )
                         } ) ) )
             .append(
@@ -176,8 +170,12 @@ $( function() {
         } )
 
         this.__defineSetter__( 'kJs', function( val ) {
-            $kj.text( val )
-            this.$quantity.keyup()
+            if( val == null ) {
+                $kj.text( '?' )
+            } else {
+                $kj.text( val )
+                this.$quantity.keyup()
+            }
         } )        
 
         return this
