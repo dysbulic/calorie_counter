@@ -66,15 +66,29 @@ $( function() {
                 id: data.id,
                 '/food/recipe/ingredients': [{
                     id: null,
-                    ingredient: null,
-                    unit: null,
+                    ingredient: {
+                        id: null,
+                        name: null,
+                        '/food/food/energy': null
+                    },
+                    unit: {
+                        id: null,
+                        name: null
+                    },
                     quantity: null
                 }]
             }]
             
             freebase_query( query,
                             function( response ) {
-                                console.log( response )
+                                $.each( response.result[0]['/food/recipe/ingredients'], function( index, ingredient ) {
+                                    var row = addRow()
+                                    row.$suggest.val( ingredient.ingredient.name )
+                                    row.$quantity.val( ingredient.quantity )
+                                    row.kJs = ingredient.ingredient['/food/food/energy']
+                                    row.$units.val( ingredient.unit.id )
+                                    row.$units.change()
+                                } )
                             } )
         } )
 
@@ -82,16 +96,16 @@ $( function() {
         this.$elem = $('<tr/>').addClass( 'ingredient' )
         this.$suggest = $('<input/>').attr( { type: 'text' } )
         this.$calories = $('<td/>')
+        this.$quantity = $('<input/>').attr( { type: 'text' } )
+        this.$units = get_$units()
+
         var $kj = $('<td/>')
         var $icon = $('<td/>').addClass( 'icon' )
-        var $quantity = $('<input/>').attr( { type: 'text' } )
         
         var row = this
 
-        var $units = get_$units()
-
-        $units.change( function() {
-            $quantity.keyup()
+        this.$units.change( function() {
+            row.$quantity.keyup()
         } )
         
         this.$elem
@@ -104,7 +118,7 @@ $( function() {
                             filter: '(all type:/food/ingredient)'
                         } )
                         .bind( 'fb-select', function( evt, data ) {
-                            $icon.attr( { id: data.name } )
+                            $icon.attr( { id: data.id } )
                             $kj.addClass( 'loading' )
                             
                             var query = {
@@ -122,7 +136,7 @@ $( function() {
                                         $kj.text( '?' )
                                     } else {
                                         $kj.text( kjs )
-                                        $quantity.keyup()
+                                        this.$quantity.keyup()
                                     }
                                 } )
                         } ) ) )
@@ -130,18 +144,18 @@ $( function() {
                 $('<td/>')
                     .addClass( 'quantity' )
                     .append(
-                        $quantity
+                        this.$quantity
                             .numeric()
                             .keyup( function() {
                                 var kjs = row.kJs
                                 if( kjs != undefined ) {
                                     var grams
-                                    if( $units.find(":selected").hasClass( 'volume' ) ) {
-                                        var ccs = ( new UnitConverter( $(this).val(), $units.val() ) ).as( 'cc' ).val()
+                                    if( row.$units.find(":selected").hasClass( 'volume' ) ) {
+                                        var ccs = ( new UnitConverter( $(this).val(), row.$units.val() ) ).as( 'cc' ).val()
                                         var density = 1
                                         grams = ccs * density
                                     } else {
-                                        grams = ( new UnitConverter( $(this).val(), $units.val() ) ).as( 'g' ).val()
+                                        grams = ( new UnitConverter( $(this).val(), row.$units.val() ) ).as( 'g' ).val()
                                     }
                                     var toCalories = new UnitConverter( grams * ( kjs / 100 ), 'kJ' )
                                     row.$calories.text( Math.round( toCalories.as( 'kcal' ).val() ) )
@@ -149,7 +163,7 @@ $( function() {
                                 }
                             } )
                     )
-                    .append( $units ) )
+                    .append( this.$units ) )
             .append( $kj )
             .append( this.$calories )
 
@@ -160,6 +174,12 @@ $( function() {
             }
             return kjs
         } )
+
+        this.__defineSetter__( 'kJs', function( val ) {
+            $kj.text( val )
+            this.$quantity.keyup()
+        } )        
+
         return this
     }
 
@@ -170,10 +190,10 @@ $( function() {
 
         $('.recipe tbody').append( row.$elem )
 
-        var run = false
+        var once = false
         row.$suggest.keyup( function() {
-            if( ! run ) {
-                run = true
+            if( ! once ) {
+                once = true
                 addRow()
             }
         } )
@@ -192,6 +212,8 @@ $( function() {
         } )
 
         rows.push( row )
+
+        return row
     }
 
     addRow()
