@@ -1,4 +1,33 @@
 $( function() {
+    function freebase_query( query, handler ) {
+        // From: https://developers.google.com/freebase/v1/mql-overview#mql-readwrite-documentation
+        var fb_url = 'https://www.googleapis.com/freebase/v1/mqlread'
+        fb_url += "?query=" + encodeURIComponent( JSON.stringify( query ) )
+            
+        $.getJSON( fb_url, handler )
+    }
+
+    $('#recipe')
+        .suggest( {
+            key: 'AIzaSyDqk53HcVbo2dP8ULc1qANB9Iejr7iXZOg',
+            filter: '(all type:/m/05v2c_w)'
+        } )
+        .bind( 'fb-select', function( evt, data ) {
+            var query = [{
+                id: data.id,
+                '/food/recipe/ingredients': [{
+                    id: null,
+                    ingredient: null,
+                    unit: null,
+                    quantity: null
+                }]
+            }]
+            
+            freebase_query( query,
+                            function( response ) {
+                                console.log( response )
+                            } )
+        } )
 
     function Row() {
         this.$elem = $('<tr/>').addClass( 'ingredient' )
@@ -49,21 +78,19 @@ $( function() {
                                 '/food/food/energy': null
                             }
                             
-                            // From: https://developers.google.com/freebase/v1/mql-overview#mql-readwrite-documentation
-                            var fb_url = 'https://www.googleapis.com/freebase/v1/mqlread'
-                            fb_url += "?query=" + encodeURIComponent( JSON.stringify( query ) )
-                            
-                            $.getJSON( fb_url,
-                                       function( response ) {
-                                           $kj.removeClass( 'loading' )
-                                           var kjs = response.result['/food/food/energy']
-                                           if( kjs == null ) {
-                                               $kj.text( '?' )
-                                           } else {
-                                               $kj.text( kjs )
-                                               $quantity.keyup()
-                                           }
-                                       } )
+                            freebase_query(
+                                query,
+                                function( response ) {
+                                    $kj.removeClass( 'loading' )
+
+                                    var kjs = response.result['/food/food/energy']
+                                    if( kjs == null ) {
+                                        $kj.text( '?' )
+                                    } else {
+                                        $kj.text( kjs )
+                                        $quantity.keyup()
+                                    }
+                                } )
                         } ) ) )
             .append(
                 $('<td/>')
@@ -93,7 +120,7 @@ $( function() {
     function addRow() {
         var row = new Row()
 
-        $('#recipe tbody').append( row.$elem )
+        $('.recipe tbody').append( row.$elem )
 
         var run = false
         row.$suggest.keyup( function() {

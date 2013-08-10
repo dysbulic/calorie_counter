@@ -1,5 +1,4 @@
 // From: http://stackoverflow.com/questions/865590/unit-of-measure-conversion-library#answer-3531444
-
 ( function () {
     var table = {}
 
@@ -9,10 +8,12 @@
             this.currentUnit = unit
         }
     }
+
     UnitConverter.prototype.as = function( targetUnit ) {
         this.targetUnit = targetUnit
         return this
     }
+
     UnitConverter.prototype.is = function (currentUnit) {
         this.currentUnit = currentUnit
         return this
@@ -36,12 +37,15 @@
 
         return value
     }
+
     UnitConverter.prototype.toString = function () {
         return this.val() + ' ' + this.targetUnit
     }
+
     UnitConverter.prototype.debug = function () {
         return this.value + ' ' + this.currentUnit + ' is ' + this.val() + ' ' + this.targetUnit
     }
+
     UnitConverter.addUnit = function ( baseUnit, actualUnit, multiplier ) {
         table[actualUnit] = { base: baseUnit, actual: actualUnit, multiplier: multiplier }
     }
@@ -64,5 +68,5 @@
     UnitConverter.addUnit( 'g', 'oz', 28.3495231 )
     UnitConverter.addUnit( 'g', 'pound', 453.59237 )
     UnitConverter.addUnit( 'g', 'lb', 453.59237 )
-    UnitConverter.addUnit( 'J', 'cal', 4.2 )    
+    UnitConverter.addUnit( 'J', 'cal', 4.1868 )
 } )()
