@@ -86,6 +86,9 @@ $( function() {
                             function( response ) {
                                 $.each( response.result[0]['/food/recipe/ingredients'], function( index, ingredient ) {
                                     var row = addRow()
+
+                                    console.log( ingredient )
+
                                     if( ingredient.ingredient == null ) {
                                         row.$suggest.val( 'Unspecified' )
                                         row.kJs = null
@@ -93,7 +96,9 @@ $( function() {
                                         row.$suggest.val( ingredient.ingredient.name )
                                         row.kJs = ingredient.ingredient['/food/food/energy']
                                     }
+
                                     row.$quantity.val( ingredient.quantity )
+                                    
                                     row.$units.val( ingredient.unit == null ? '' : ingredient.unit.id )
                                     row.$units.change()
                                 } )
