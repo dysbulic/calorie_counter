@@ -28,6 +28,7 @@ $( function() {
                             ids.push( id )
                         } )
                     } )
+                    $units.find( '[label="weight"]' ).append( $('<option/>').val( '' ).text( 'whole' ) )
                         
                     var query = [{
                         'id|=': ids,
@@ -69,11 +70,13 @@ $( function() {
                     ingredient: {
                         id: null,
                         name: null,
-                        '/food/food/energy': null
+                        '/food/food/energy': null,
+                        optional: true
                     },
                     unit: {
                         id: null,
-                        name: null
+                        name: null,
+                        optional: true
                     },
                     quantity: null
                 }]
@@ -83,10 +86,15 @@ $( function() {
                             function( response ) {
                                 $.each( response.result[0]['/food/recipe/ingredients'], function( index, ingredient ) {
                                     var row = addRow()
-                                    row.$suggest.val( ingredient.ingredient.name )
+                                    if( ingredient.ingredient == null ) {
+                                        row.$suggest.val( 'Unspecified' )
+                                        row.kJs = null
+                                    } else {
+                                        row.$suggest.val( ingredient.ingredient.name )
+                                        row.kJs = ingredient.ingredient['/food/food/energy']
+                                    }
                                     row.$quantity.val( ingredient.quantity )
-                                    row.kJs = ingredient.ingredient['/food/food/energy']
-                                    row.$units.val( ingredient.unit.id )
+                                    row.$units.val( ingredient.unit == null ? '' : ingredient.unit.id )
                                     row.$units.change()
                                 } )
                             } )
@@ -143,17 +151,22 @@ $( function() {
                             .keyup( function() {
                                 var kjs = row.kJs
                                 if( kjs != undefined ) {
-                                    var grams
-                                    if( row.$units.find(":selected").hasClass( 'volume' ) ) {
-                                        var ccs = ( new UnitConverter( $(this).val(), row.$units.val() ) ).as( 'cc' ).val()
-                                        var density = 1
-                                        grams = ccs * density
-                                    } else {
-                                        grams = ( new UnitConverter( $(this).val(), row.$units.val() ) ).as( 'g' ).val()
+                                    try {
+                                        var grams
+                                        if( row.$units.find(":selected").hasClass( 'volume' ) ) {
+                                            var ccs = ( new UnitConverter( $(this).val(), row.$units.val() ) ).as( 'cc' ).val()
+                                            var density = 1
+                                            grams = ccs * density
+                                        } else {
+                                            grams = ( new UnitConverter( $(this).val(), row.$units.val() ) ).as( 'g' ).val()
+                                        }
+                                        var toCalories = new UnitConverter( grams * ( kjs / 100 ), 'kJ' )
+                                        row.$calories.text( Math.round( toCalories.as( 'kcal' ).val() ) )
+                                        row.$calories.change()
+                                    } catch( e ) {
+                                        row.$calories.text( '' )
+                                        row.$calories.change()
                                     }
-                                    var toCalories = new UnitConverter( grams * ( kjs / 100 ), 'kJ' )
-                                    row.$calories.text( Math.round( toCalories.as( 'kcal' ).val() ) )
-                                    row.$calories.change()
                                 }
                             } )
                     )
@@ -199,11 +212,7 @@ $( function() {
         row.$calories.change( function() {
             var calories = rows.map( function( row ) {
                 var val = parseFloat( row.$calories.text() )
-                if( ! isNaN( val ) ) {
-                    return val
-                } else {
-                    return 0
-                }
+                return isNaN( val ) ? 0 : val
             } )
             var sum = calories.reduce( function( current, previous ) { return current + previous } )
             $('#total').text( sum )
