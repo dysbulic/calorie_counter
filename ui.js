@@ -39,6 +39,8 @@ $( function() {
                     freebase_query(
                         query,
                         function( response ) {
+                            console.log( response.result )
+
                             $.each( response.result, function( index, result ) {
                                 var multiplier = result['/measurement_unit/mass_unit/weightmass_in_kilograms']
                                 if( multiplier != null ) {
@@ -63,6 +65,10 @@ $( function() {
             filter: '(all type:/m/05v2c_w)'
         } )
         .bind( 'fb-select', function( evt, data ) {
+            var $input = $(this)
+
+            $input.addClass( 'loading' )
+
             var query = [{
                 id: data.id,
                 '/food/recipe/ingredients': [{
@@ -84,6 +90,8 @@ $( function() {
             
             freebase_query( query,
                             function( response ) {
+                                $input.removeClass( 'loading' )
+
                                 $.each( response.result[0]['/food/recipe/ingredients'], function( index, ingredient ) {
                                     var row = addRow()
 
@@ -99,7 +107,11 @@ $( function() {
 
                                     row.$quantity.val( ingredient.quantity )
                                     
-                                    row.$units.val( ingredient.unit == null ? '' : ingredient.unit.id )
+                                    var unitId = ingredient.unit == null ? '' : ingredient.unit.id
+                                    if( unitId == '/en/cup' ) { // Generic cups have no volumetric equivalent
+                                        unitId += '_us' // Default to US
+                                    }
+                                    row.$units.val( unitId )
                                     row.$units.change()
                                 } )
                             } )
@@ -169,6 +181,7 @@ $( function() {
                                         row.$calories.text( Math.round( toCalories.as( 'kcal' ).val() ) )
                                         row.$calories.change()
                                     } catch( e ) {
+                                        console.error( e.message )
                                         row.$calories.text( '' )
                                         row.$calories.change()
                                     }
@@ -189,12 +202,20 @@ $( function() {
 
         this.__defineSetter__( 'kJs', function( val ) {
             if( val == null ) {
-                $kj.text( '?' )
+                console.log( arguments.callee.$modal )
+                arguments.callee.$modal =
+                    $('<div/>').addClass( 'modal' )
+                $kj.append(
+                    $('<a/>').addClass( 'button' )
+                        .text( '?' )
+                        .click( function() {
+                            arguments.callee.$modal.modal()
+                        } ) )
             } else {
                 $kj.text( val )
                 this.$quantity.keyup()
             }
-        } )        
+        } )
 
         return this
     }

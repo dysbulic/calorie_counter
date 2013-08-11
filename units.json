@@ -6,7 +6,7 @@
     },
     "volume": {
         "ounces": "/en/fluid_ounce_us",
-        "cups": "/en/cup",
+        "cups": "/en/cup_us",
         "pints": "/en/pint_us",
         "quarts": "/en/quart_us",
         "teaspoons": "/en/teaspoon",
