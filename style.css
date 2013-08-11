@@ -56,7 +56,7 @@ th, td {
     background-position: center;
 }
 
-.kj, .calories {
+.kj, .calories, .opt-buttons {
     text-align: center;
 }
 
@@ -69,4 +69,16 @@ th, td {
 
 .buttons {
     text-align: right;
+}
+
+.cals_in {
+    margin: auto .75em;
+}
+
+.modal input, .modal select {
+    width: 20%;
+}
+
+.modal select {
+    margin-left: .75em;
 }

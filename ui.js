@@ -7,64 +7,70 @@ $( function() {
         $.getJSON( fb_url, handler )
     }
 
-    var $units
+    var unitsCategories
     function get_$units( options ) {
-        if( $units == undefined ) {
-            $units = $('<select/>')
+        var $units = $('<select/>')
+        if( unitsCategories == undefined ) {
             $.ajax( {
                 dataType: 'json',
                 url: 'units.json',
                 async: false,
                 success: function( categories ) {
-                    var ids = []
-
-                    $.each( categories, function( type, units ) {
-                        var $parent
-                        console.log( 'options', options )
-                        if( ! options || ! options.type ) {
-                            var $type = $('<optgroup/>').attr( { label: type } )
-                            $units.append( $type )
-                            $parent = $type
-                        } else if( type == options.type ) {
-                            $parent = $units
-                        }
-                            
-                        if( $parent ) {
-                            $.each( units, function( name, id ) {
-                                $parent.append(
-                                    $('<option/>').addClass( type ).val( id ).text( name )
-                                )
-                                ids.push( id )
-                            } )
-                        }
-                    } )
-                    $units.find( '[label="weight"]' ).append( $('<option/>').val( '' ).text( 'whole' ) )
-                        
-                    var query = [{
-                        'id|=': ids,
-                        id: null,
-                        '/measurement_unit/mass_unit/weightmass_in_kilograms': null,
-                        '/measurement_unit/volume_unit/volume_in_cubic_meters': null
-                    }]
-                    freebase_query(
-                        query,
-                        function( response ) {
-                            $.each( response.result, function( index, result ) {
-                                var multiplier = result['/measurement_unit/mass_unit/weightmass_in_kilograms']
-                                if( multiplier != null ) {
-                                        UnitConverter.addUnit( 'g', result.id, multiplier * 1000 )
-                                }
-                                multiplier = result['/measurement_unit/volume_unit/volume_in_cubic_meters']
-                                if( multiplier != null ) {
-                                        UnitConverter.addUnit( 'cc', result.id, multiplier * 1000000 )
-                                }
-                            } )
-                        }
-                    )
+                    unitsCategories = categories
                 }
             } )
         }
-        return $units.clone()
+        var ids = []
+
+        $.each( unitsCategories, function( type, units ) {
+            var $parent
+
+            if( ! options || ! options.type ) {
+                var $type = $('<optgroup/>').attr( { label: type } )
+                $units.append( $type )
+                $parent = $type
+            } else if( type == options.type ) {
+                $parent = $units
+            }
+            
+            if( $parent ) {
+                $.each( units, function( name, id ) {
+                    $parent.append(
+                        $('<option/>').addClass( type ).val( id ).text( name )
+                    )
+                    if( ! UnitConverter.hasUnit( id ) ) {
+                        ids.push( id )
+                    }
+                } )
+            }
+        } )
+        $units.find( '[label="weight"]' ).append( $('<option/>').val( '' ).text( 'whole' ) )
+        
+        if( ids.length > 0 ) {
+            var query = [{
+                'id|=': ids,
+                id: null,
+                '/measurement_unit/mass_unit/weightmass_in_kilograms': null,
+                '/measurement_unit/volume_unit/volume_in_cubic_meters': null
+            }]
+            freebase_query(
+                query,
+                function( response ) {
+                    $.each( response.result, function( index, result ) {
+                        var multiplier = result['/measurement_unit/mass_unit/weightmass_in_kilograms']
+                        if( multiplier != null ) {
+                            UnitConverter.addUnit( 'g', result.id, multiplier * 1000 )
+                        }
+                        multiplier = result['/measurement_unit/volume_unit/volume_in_cubic_meters']
+                        if( multiplier != null ) {
+                            UnitConverter.addUnit( 'cc', result.id, multiplier * 1000000 )
+                        }
+                    } )
+                }
+            )
+        }
+
+        return $units
     }
     
     $('#recipe')
@@ -122,6 +128,8 @@ $( function() {
                                 } )
                             } )
         } )
+
+    var rows = []
 
     function Row() {
         this.$elem = $('<tr/>').addClass( 'ingredient' )
@@ -197,6 +205,19 @@ $( function() {
                     .append( this.$units ) )
             .append( $kj )
             .append( this.$calories )
+            .append(
+                $('<td/>').addClass( 'opt-buttons' ).append(
+                    $('<a/>').addClass( 'btn' )
+                        .append(
+                            $('<i/>').addClass( 'icon-trash' )
+                        )
+                        .click( function() {
+                            rows.splice( rows.indexOf( row ), 1 )
+                            row.$calories.change()
+                            row.$elem.remove()
+                        } )
+                )
+            )
 
         this.__defineGetter__( 'kJs', function() {
             var kjs = $kj.text()
@@ -212,6 +233,9 @@ $( function() {
                     arguments.callee.$modal || ( function() {
                         var $calories = $('<input/>').attr( { type: 'text' } ).numeric()
                         var $weight = $('<input/>').attr( { type: 'text' } ).numeric()
+
+                        var $units = get_$units( { type: 'weight' } )
+                        $units.val( '/en/gram' )
 
                         var $modal = (
                             $('<div/>')
@@ -233,10 +257,9 @@ $( function() {
                                     $('<div/>')
                                         .addClass( 'modal-body' )
                                         .append( $calories )
-                                        .append( $('<span/>').text( 'calories' ) )
-                                        .append( $('<hr/>') )
+                                        .append( $('<span/>').addClass( 'cals_in' ).text( 'calories in' ) )
                                         .append( $weight )
-                                        .append( get_$units( { type: 'weight' } ) )
+                                        .append( $units )
                                         .append(
                                             $('<div/>').addClass( 'buttons' )
                                                 .append(
@@ -248,6 +271,11 @@ $( function() {
                                                 .append(
                                                     $('<a/>').addClass( 'btn btn-primary' ).text( 'OK' )
                                                         .click( function() {
+                                                            var grams = ( new UnitConverter( $weight.val(), $units.val() ) ).as( 'g' ).val()
+                                                            var kjs = ( new UnitConverter( $calories.val(), 'kcal' ) ).as( 'kJ' ).val()
+
+                                                            row.kJs = 100 * ( kjs / grams )
+
                                                             $modal.modal( 'hide' )
                                                         } )
                                                 )
@@ -272,8 +300,6 @@ $( function() {
 
         return this
     }
-
-    var rows = []
 
     function addRow() {
         var row = new Row()

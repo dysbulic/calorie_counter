@@ -55,6 +55,10 @@
         return this.value + ' ' + this.currentUnit + ' is ' + this.val() + ' ' + this.targetUnit
     }
 
+    UnitConverter.hasUnit = function ( id ) {
+        return table[id] != undefined
+    }
+
     UnitConverter.addUnit = function ( baseUnit, actualUnit, multiplier ) {
         table[actualUnit] = { base: baseUnit, actual: actualUnit, multiplier: multiplier }
         table[baseUnit] = { base: actualUnit, actual: baseUnit, multiplier: 1 / multiplier }
