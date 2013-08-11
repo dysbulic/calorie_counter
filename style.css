@@ -66,3 +66,7 @@ th, td {
 
 #recipe.loading {
 }
+
+.buttons {
+    text-align: right;
+}

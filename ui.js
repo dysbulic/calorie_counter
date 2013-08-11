@@ -8,7 +8,7 @@ $( function() {
     }
 
     var $units
-    function get_$units() {
+    function get_$units( options ) {
         if( $units == undefined ) {
             $units = $('<select/>')
             $.ajax( {
@@ -16,17 +16,27 @@ $( function() {
                 url: 'units.json',
                 async: false,
                 success: function( categories ) {
-                    options = ''
                     var ids = []
+
                     $.each( categories, function( type, units ) {
-                        var $type = $('<optgroup/>').attr( { label: type } )
-                        $units.append( $type )
-                        
-                        $.each( units, function( name, id ) {
-                            $type.append(
-                                $('<option/>').addClass( type ).val( id ).text( name ) )
-                            ids.push( id )
-                        } )
+                        var $parent
+                        console.log( 'options', options )
+                        if( ! options || ! options.type ) {
+                            var $type = $('<optgroup/>').attr( { label: type } )
+                            $units.append( $type )
+                            $parent = $type
+                        } else if( type == options.type ) {
+                            $parent = $units
+                        }
+                            
+                        if( $parent ) {
+                            $.each( units, function( name, id ) {
+                                $parent.append(
+                                    $('<option/>').addClass( type ).val( id ).text( name )
+                                )
+                                ids.push( id )
+                            } )
+                        }
                     } )
                     $units.find( '[label="weight"]' ).append( $('<option/>').val( '' ).text( 'whole' ) )
                         
@@ -39,8 +49,6 @@ $( function() {
                     freebase_query(
                         query,
                         function( response ) {
-                            console.log( response.result )
-
                             $.each( response.result, function( index, result ) {
                                 var multiplier = result['/measurement_unit/mass_unit/weightmass_in_kilograms']
                                 if( multiplier != null ) {
@@ -94,8 +102,6 @@ $( function() {
 
                                 $.each( response.result[0]['/food/recipe/ingredients'], function( index, ingredient ) {
                                     var row = addRow()
-
-                                    console.log( ingredient )
 
                                     if( ingredient.ingredient == null ) {
                                         row.$suggest.val( 'Unspecified' )
@@ -156,7 +162,7 @@ $( function() {
                                 function( response ) {
                                     $kj.removeClass( 'loading' )
 
-                                    this.kjs = response.result['/food/food/energy']
+                                    row.kJs = response.result['/food/food/energy']
                                 } )
                         } ) ) )
             .append(
@@ -202,14 +208,61 @@ $( function() {
 
         this.__defineSetter__( 'kJs', function( val ) {
             if( val == null ) {
-                console.log( arguments.callee.$modal )
-                arguments.callee.$modal =
-                    $('<div/>').addClass( 'modal' )
+                var $modal = arguments.callee.$modal =
+                    arguments.callee.$modal || ( function() {
+                        var $calories = $('<input/>').attr( { type: 'text' } ).numeric()
+                        var $weight = $('<input/>').attr( { type: 'text' } ).numeric()
+
+                        var $modal = (
+                            $('<div/>')
+                                .addClass( 'modal fade' )
+                                .css( { display: 'none' } )
+                                .append(
+                                    $('<div/>').addClass( 'modal-header' )
+                                        .append( 
+                                            $('<button/>')
+                                                .addClass( 'close' )
+                                                .attr( { 'data-dismiss': 'modal' } )
+                                                .text( '×' )
+                                        )
+                                        .append( 
+                                            $('<h3/>').text( 'Calorie Information: ' + row.$suggest.val() )
+                                        )
+                                )
+                                .append(
+                                    $('<div/>')
+                                        .addClass( 'modal-body' )
+                                        .append( $calories )
+                                        .append( $('<span/>').text( 'calories' ) )
+                                        .append( $('<hr/>') )
+                                        .append( $weight )
+                                        .append( get_$units( { type: 'weight' } ) )
+                                        .append(
+                                            $('<div/>').addClass( 'buttons' )
+                                                .append(
+                                                    $('<a/>').addClass( 'btn' ).text( 'Cancel' )
+                                                        .click( function() {
+                                                            $modal.modal( 'hide' )
+                                                        } )
+                                                )
+                                                .append(
+                                                    $('<a/>').addClass( 'btn btn-primary' ).text( 'OK' )
+                                                        .click( function() {
+                                                            $modal.modal( 'hide' )
+                                                        } )
+                                                )
+                                        )
+                                )
+                        )
+                        $('body').append( $modal )
+                        return $modal
+                    } )()
+
                 $kj.append(
-                    $('<a/>').addClass( 'button' )
+                    $('<a/>').addClass( 'btn' )
                         .text( '?' )
                         .click( function() {
-                            arguments.callee.$modal.modal()
+                            $modal.modal()
                         } ) )
             } else {
                 $kj.text( val )
