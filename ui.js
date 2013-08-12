@@ -219,7 +219,9 @@ $( function() {
                         .append(
                             $('<i/>').addClass( 'icon-trash' )
                         )
-                        .click( row.remove )
+                        .click( function() {
+                            row.remove()
+                        } )
                 )
             )
 
@@ -235,11 +237,29 @@ $( function() {
             if( val == null ) {
                 var $modal = arguments.callee.$modal =
                     arguments.callee.$modal || ( function() {
-                        var $calories = $('<input/>').attr( { type: 'text' } ).numeric()
-                        var $weight = $('<input/>').attr( { type: 'text' } ).numeric()
-
                         var $units = get_$units( { type: 'weight' } )
                         $units.val( '/en/gram' )
+
+                        var $okButton = (
+                            $('<a/>').addClass( 'btn btn-primary' ).text( 'OK' )
+                                .click( function() {
+                                    var grams = ( new UnitConverter( $weight.val(), $units.val() ) ).as( 'g' ).val()
+                                    var kjs = ( new UnitConverter( $calories.val(), 'kcal' ) ).as( 'kJ' ).val()
+                                    
+                                    row.kJs = 100 * ( kjs / grams )
+                                    
+                                    $modal.modal( 'hide' )
+                                } )
+                        )
+
+                        function submitOnEnter( evt ) {
+                            if( evt.which == 13 ) {
+                                $okButton.click()
+                            }
+                        }
+
+                        var $calories = $('<input/>').attr( { type: 'text' } ).keypress( submitOnEnter ).numeric()
+                        var $weight = $('<input/>').attr( { type: 'text' } ).keypress( submitOnEnter ).numeric()
 
                         var $modal = (
                             $('<div/>')
@@ -272,17 +292,7 @@ $( function() {
                                                             $modal.modal( 'hide' )
                                                         } )
                                                 )
-                                                .append(
-                                                    $('<a/>').addClass( 'btn btn-primary' ).text( 'OK' )
-                                                        .click( function() {
-                                                            var grams = ( new UnitConverter( $weight.val(), $units.val() ) ).as( 'g' ).val()
-                                                            var kjs = ( new UnitConverter( $calories.val(), 'kcal' ) ).as( 'kJ' ).val()
-
-                                                            row.kJs = 100 * ( kjs / grams )
-
-                                                            $modal.modal( 'hide' )
-                                                        } )
-                                                )
+                                                .append( $okButton )
                                         )
                                 )
                         )
@@ -307,6 +317,7 @@ $( function() {
         } )
 
         this.remove = function() {
+            console.log( 'remove' )
             rows.splice( rows.indexOf( row ), 1 )
             row.$calories.change()
             row.$elem.remove()
