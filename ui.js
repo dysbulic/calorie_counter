@@ -106,6 +106,12 @@ $( function() {
                             function( response ) {
                                 $input.removeClass( 'loading' )
 
+                                $.each( rows, function( index, row ) {
+                                    if( row.empty ) {
+                                        row.remove()
+                                    }
+                                } )
+
                                 $.each( response.result[0]['/food/recipe/ingredients'], function( index, ingredient ) {
                                     var row = addRow()
 
@@ -126,6 +132,8 @@ $( function() {
                                     row.$units.val( unitId )
                                     row.$units.change()
                                 } )
+
+                                addRow()
                             } )
         } )
 
@@ -211,11 +219,7 @@ $( function() {
                         .append(
                             $('<i/>').addClass( 'icon-trash' )
                         )
-                        .click( function() {
-                            rows.splice( rows.indexOf( row ), 1 )
-                            row.$calories.change()
-                            row.$elem.remove()
-                        } )
+                        .click( row.remove )
                 )
             )
 
@@ -298,6 +302,16 @@ $( function() {
             }
         } )
 
+        this.__defineGetter__( 'empty', function() {
+            return row.$suggest.val() == ''
+        } )
+
+        this.remove = function() {
+            rows.splice( rows.indexOf( row ), 1 )
+            row.$calories.change()
+            row.$elem.remove()
+        }
+
         return this
     }
 
@@ -319,7 +333,7 @@ $( function() {
                 var val = parseFloat( row.$calories.text() )
                 return isNaN( val ) ? 0 : val
             } )
-            var sum = calories.reduce( function( current, previous ) { return current + previous } )
+            var sum = calories.length == 0 ? 0 : calories.reduce( function( current, previous ) { return current + previous } )
             $('#total').text( sum )
         } )
 
