@@ -46,7 +46,11 @@ $( function() {
                 } )
             }
         } )
-        $units.find( '[label="weight"]' ).append( $('<option/>').val( '' ).text( 'whole' ) )
+        var $wholeOpt = $('<option/>').val( '' ).text( 'whole' )
+        $units.find( '[label="volume"]' ).prepend( $wholeOpt )
+        if( options && options.type == 'volume' ) {
+            $units.prepend( $wholeOpt )
+        }
         
         if( ids.length > 0 ) {
             var query = [{
@@ -121,7 +125,7 @@ $( function() {
 
                                 $.each( response.result[0]['/food/recipe/ingredients'], function( index, ingredient ) {
                                     var row = addRow()
-
+                                    
                                     if( ingredient.ingredient == null ) {
                                         row.$suggest.val( 'Unspecified' )
                                         row.kJs = null
@@ -153,15 +157,116 @@ $( function() {
         this.$calories = $('<td/>').addClass( 'calories' )
         this.$quantity = $('<input/>').attr( { type: 'text' } )
         this.$units = get_$units()
-
+        
         var $kj = $('<td/>').addClass( 'kj' )
         var $icon = $('<td/>').addClass( 'icon' )
         
         var row = this
-
+        
         this.$units.change( function() {
             row.$quantity.keyup()
         } )
+
+        var $modal = ( function() {
+            var $okButton = (
+                $('<a/>').addClass( 'btn btn-primary' ).text( 'OK' )
+                    .click( function() {
+                        var grams = ( new UnitConverter( $weight.val(), $units.val() ) ).as( 'g' ).val()
+                        var kjs = ( new UnitConverter( $calories.val(), 'kcal' ) ).as( 'kJ' ).val()
+                        
+                        row.kJs = 100 * ( kjs / grams )
+                        
+                        $modal.modal( 'hide' )
+                    } )
+            )
+            
+            function submitOnEnter( evt ) {
+                if( evt.which == 13 ) {
+                    $okButton.click()
+                }
+            }
+            
+            var $calories = $('<input/>').attr( { type: 'text' } ).keypress( submitOnEnter ).numeric()
+            var $weight = $('<input/>').attr( { type: 'text' } ).keypress( submitOnEnter ).numeric()
+            
+            var $caloriesRow = ( function() {
+                var $units = get_$units( { type: 'weight' } )
+                $units.val( '/en/gram' )
+                
+                return $('<div/>')
+                    .append( $calories )
+                    .append( $('<span/>').addClass( 'cals_in' ).text( 'calories in' ) )
+                    .append( $weight )
+                    .append( $units )
+            } )()
+            
+            var $kjs = $('<input/>').attr( { type: 'text' } ).keypress( submitOnEnter ).numeric()
+
+            var $kjsRow = (
+                $('<div/>')
+                    .append( $kjs )
+                    .append( $('<span/>').addClass( 'kjs_in' )
+                             .append( $('<acronym/>').attr( { title: 'Kilojoules' } ).text( 'kJs' ) )
+                             .append( $('<span/>').text( ' in 100' ) )
+                             .append( $('<acronym/>').attr( { title: 'Grams' } ).text( 'g' ) )
+                           )
+            )
+
+            var $densityRow = ( function() {
+                var $weight = $('<input/>').attr( { type: 'text' } ).keypress( submitOnEnter ).numeric()
+                var $weightUnits = get_$units( { type: 'weight' } )
+                $weightUnits.val( '/en/gram' )
+                
+                var $volume = $('<input/>').attr( { type: 'text' } ).keypress( submitOnEnter ).numeric()
+                var $volumeUnits = get_$units( { type: 'volume' } )
+
+                return $('<div/>')
+                    .append( $weight )
+                    .append( $weightUnits )
+                    .append( $('<span/>').text( 'per' ) )
+                    .append( $volume )
+                    .append( $volumeUnits )
+            } )()
+            
+            var $modal = (
+                $('<div/>')
+                    .addClass( 'modal fade' )
+                    .css( { display: 'none' } )
+                    .append(
+                        $('<div/>').addClass( 'modal-header' )
+                            .append( 
+                                $('<button/>')
+                                    .addClass( 'close' )
+                                    .attr( { 'data-dismiss': 'modal' } )
+                                    .text( '×' )
+                            )
+                            .append( 
+                                $('<h3/>').text( 'Calorie Information: ' + row.$suggest.val() )
+                            )
+                    )
+                    .append(
+                        $('<div/>')
+                            .addClass( 'modal-body' )
+                            .append( $caloriesRow )
+                            .append( $kjsRow )
+                            .append( $densityRow )
+                            .append(
+                                $('<div/>').addClass( 'buttons' )
+                                    .append(
+                                        $('<a/>').addClass( 'btn' ).text( 'Cancel' )
+                                            .click( function() {
+                                                $modal.modal( 'hide' )
+                                            } )
+                                    )
+                                    .append( $okButton )
+                            )
+                    )
+            )
+
+            $('body').append( $modal )
+
+            return $modal
+        } )()
         
         this.$elem
             .append( $icon )
@@ -249,71 +354,6 @@ $( function() {
 
         this.__defineSetter__( 'kJs', function( val ) {
             if( val == null ) {
-                var $modal = arguments.callee.$modal =
-                    arguments.callee.$modal || ( function() {
-                        var $units = get_$units( { type: 'weight' } )
-                        $units.val( '/en/gram' )
-
-                        var $okButton = (
-                            $('<a/>').addClass( 'btn btn-primary' ).text( 'OK' )
-                                .click( function() {
-                                    var grams = ( new UnitConverter( $weight.val(), $units.val() ) ).as( 'g' ).val()
-                                    var kjs = ( new UnitConverter( $calories.val(), 'kcal' ) ).as( 'kJ' ).val()
-                                    
-                                    row.kJs = 100 * ( kjs / grams )
-                                    
-                                    $modal.modal( 'hide' )
-                                } )
-                        )
-
-                        function submitOnEnter( evt ) {
-                            if( evt.which == 13 ) {
-                                $okButton.click()
-                            }
-                        }
-
-                        var $calories = $('<input/>').attr( { type: 'text' } ).keypress( submitOnEnter ).numeric()
-                        var $weight = $('<input/>').attr( { type: 'text' } ).keypress( submitOnEnter ).numeric()
-
-                        var $modal = (
-                            $('<div/>')
-                                .addClass( 'modal fade' )
-                                .css( { display: 'none' } )
-                                .append(
-                                    $('<div/>').addClass( 'modal-header' )
-                                        .append( 
-                                            $('<button/>')
-                                                .addClass( 'close' )
-                                                .attr( { 'data-dismiss': 'modal' } )
-                                                .text( '×' )
-                                        )
-                                        .append( 
-                                            $('<h3/>').text( 'Calorie Information: ' + row.$suggest.val() )
-                                        )
-                                )
-                                .append(
-                                    $('<div/>')
-                                        .addClass( 'modal-body' )
-                                        .append( $calories )
-                                        .append( $('<span/>').addClass( 'cals_in' ).text( 'calories in' ) )
-                                        .append( $weight )
-                                        .append( $units )
-                                        .append(
-                                            $('<div/>').addClass( 'buttons' )
-                                                .append(
-                                                    $('<a/>').addClass( 'btn' ).text( 'Cancel' )
-                                                        .click( function() {
-                                                            $modal.modal( 'hide' )
-                                                        } )
-                                                )
-                                                .append( $okButton )
-                                        )
-                                )
-                        )
-                        $('body').append( $modal )
-                        return $modal
-                    } )()
-
                 $kj.append(
                     $('<a/>').addClass( 'btn' )
                         .text( '?' )
