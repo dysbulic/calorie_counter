@@ -1,4 +1,6 @@
 $( function() {
+    var API_KEY = 'AIzaSyDqk53HcVbo2dP8ULc1qANB9Iejr7iXZOg'
+
     function freebase_query( query, handler ) {
         // From: https://developers.google.com/freebase/v1/mql-overview#mql-readwrite-documentation
         var fb_url = 'https://www.googleapis.com/freebase/v1/mqlread'
@@ -75,7 +77,7 @@ $( function() {
     
     $('#recipe')
         .suggest( {
-            key: 'AIzaSyDqk53HcVbo2dP8ULc1qANB9Iejr7iXZOg',
+            key: API_KEY,
             filter: '(all type:/m/05v2c_w)'
         } )
         .bind( 'fb-select', function( evt, data ) {
@@ -91,6 +93,10 @@ $( function() {
                         id: null,
                         name: null,
                         '/food/food/energy': null,
+                        '/common/topic/image': {
+                            id: null,
+                            limit: 1
+                        },
                         optional: true
                     },
                     unit: {
@@ -121,6 +127,7 @@ $( function() {
                                     } else {
                                         row.$suggest.val( ingredient.ingredient.name )
                                         row.kJs = ingredient.ingredient['/food/food/energy']
+                                        row.iconId = ingredient.ingredient['/common/topic/image'] && ingredient.ingredient['/common/topic/image'].id
                                     }
 
                                     row.$quantity.val( ingredient.quantity )
@@ -161,7 +168,7 @@ $( function() {
                 $('<td/>').append(
                     this.$suggest
                         .suggest( {
-                            key: 'AIzaSyDqk53HcVbo2dP8ULc1qANB9Iejr7iXZOg',
+                            key: API_KEY,
                             filter: '(all type:/food/ingredient)'
                         } )
                         .bind( 'fb-select', function( evt, data ) {
@@ -170,13 +177,19 @@ $( function() {
                             
                             var query = {
                                 id: data.id,
-                                '/food/food/energy': null
+                                '/food/food/energy': null,
+                                '/common/topic/image': {
+                                    id: null,
+                                    limit: 1
+                                }
                             }
                             
                             freebase_query(
                                 query,
                                 function( response ) {
                                     $kj.removeClass( 'loading' )
+
+                                    row.iconId = response.result['/common/topic/image'] && response.result['/common/topic/image'].id
 
                                     row.kJs = response.result['/food/food/energy']
                                 } )
@@ -312,12 +325,19 @@ $( function() {
             }
         } )
 
+        this.__defineSetter__( 'iconId', function( id ) {
+            if( id ) {
+                $icon.append(
+                    $('<img/>').attr( { src: 'https://usercontent.googleapis.com/freebase/v1/image' + id } )
+                )
+            }
+        } )
+
         this.__defineGetter__( 'empty', function() {
             return row.$suggest.val() == ''
         } )
 
         this.remove = function() {
-            console.log( 'remove' )
             rows.splice( rows.indexOf( row ), 1 )
             row.$calories.change()
             row.$elem.remove()

@@ -48,6 +48,12 @@ th, td {
     background-repeat: no-repeat;
     background-position: center;
     background-size: 75% 75%;
+    text-align: center;
+}
+
+.icon img {
+    max-height: 2.4em;
+    max-width: 100%;
 }
 
 .loading {
@@ -82,3 +88,4 @@ th, td {
 .modal select {
     margin-left: .75em;
 }
+
