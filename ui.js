@@ -95,6 +95,7 @@ $( function() {
                         '/food/food/energy': null,
                         '/common/topic/image': {
                             id: null,
+                            optional: true,
                             limit: 1
                         },
                         optional: true
