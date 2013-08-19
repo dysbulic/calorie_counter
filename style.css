@@ -89,3 +89,18 @@ th, td {
     margin-left: .75em;
 }
 
+.modal div {
+    text-align: center;
+}
+
+.modal h3 {
+    text-align: left;
+}
+
+.modal span {
+    margin: auto .75em;
+}
+
+.modal a {
+    margin-left: .75em;
+}

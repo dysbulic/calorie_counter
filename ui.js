@@ -200,18 +200,6 @@ $( function() {
                     .append( $units )
             } )()
             
-            var $kjs = $('<input/>').attr( { type: 'text' } ).keypress( submitOnEnter ).numeric()
-
-            var $kjsRow = (
-                $('<div/>')
-                    .append( $kjs )
-                    .append( $('<span/>').addClass( 'kjs_in' )
-                             .append( $('<acronym/>').attr( { title: 'Kilojoules' } ).text( 'kJs' ) )
-                             .append( $('<span/>').text( ' in 100' ) )
-                             .append( $('<acronym/>').attr( { title: 'Grams' } ).text( 'g' ) )
-                           )
-            )
-
             var $densityRow = ( function() {
                 var $weight = $('<input/>').attr( { type: 'text' } ).keypress( submitOnEnter ).numeric()
                 var $weightUnits = get_$units( { type: 'weight' } )
@@ -248,7 +236,10 @@ $( function() {
                         $('<div/>')
                             .addClass( 'modal-body' )
                             .append( $caloriesRow )
-                            .append( $kjsRow )
+                            .append( $('<hr/>') )
+                            .append(
+                                $('<h3/>').text( 'Density' )
+                            )
                             .append( $densityRow )
                             .append(
                                 $('<div/>').addClass( 'buttons' )
@@ -262,6 +253,15 @@ $( function() {
                             )
                     )
             )
+
+            $modal.__defineGetter__( 'kcalsPerGram', function( kjs ) {
+                return $calories.val() / $weight.val()
+            } )
+
+            $modal.__defineSetter__( 'kJs', function( kjs ) {
+                $calories.val( Math.round( ( new UnitConverter( kjs, 'kJ' ) ).as( 'kcal' ).val() ) )
+                $weight.val( '100' )
+            } )
 
             $('body').append( $modal )
 
@@ -307,8 +307,8 @@ $( function() {
                         this.$quantity
                             .numeric()
                             .keyup( function() {
-                                var kjs = row.kJs
-                                if( kjs != undefined ) {
+                                var kcals = $modal.kcalsPerGram
+                                if( kcals != undefined ) {
                                     try {
                                         var grams
                                         if( row.$units.find(":selected").hasClass( 'volume' ) ) {
@@ -318,7 +318,7 @@ $( function() {
                                         } else {
                                             grams = ( new UnitConverter( $(this).val(), row.$units.val() ) ).as( 'g' ).val()
                                         }
-                                        var toCalories = new UnitConverter( grams * ( kjs / 100 ), 'kJ' )
+                                        var toCalories = kcals * grams
                                         row.$calories.text( Math.round( toCalories.as( 'kcal' ).val() ) )
                                         row.$calories.change()
                                     } catch( e ) {
@@ -333,15 +333,28 @@ $( function() {
             .append( $kj )
             .append( this.$calories )
             .append(
-                $('<td/>').addClass( 'opt-buttons' ).append(
-                    $('<a/>').addClass( 'btn' )
-                        .append(
-                            $('<i/>').addClass( 'icon-trash' )
-                        )
-                        .click( function() {
-                            row.remove()
-                        } )
-                )
+                $('<td/>').addClass( 'opt-buttons' )
+                    .append(
+                        $('<div/>').addClass( 'btn-group' )
+                            .append(
+                                $('<a/>').addClass( 'btn' )
+                                    .append(
+                                        $('<i/>').addClass( 'icon-info-sign' )
+                                    )
+                                    .click( function() {
+                                        $modal.modal()
+                                    } )
+                            )
+                            .append(
+                                $('<a/>').addClass( 'btn' )
+                                    .append(
+                                        $('<i/>').addClass( 'icon-trash' )
+                                    )
+                                    .click( function() {
+                                        row.remove()
+                                    } )
+                            )   
+                    )
             )
 
         this.__defineGetter__( 'kJs', function() {
@@ -352,18 +365,8 @@ $( function() {
             return kjs
         } )
 
-        this.__defineSetter__( 'kJs', function( val ) {
-            if( val == null ) {
-                $kj.append(
-                    $('<a/>').addClass( 'btn' )
-                        .text( '?' )
-                        .click( function() {
-                            $modal.modal()
-                        } ) )
-            } else {
-                $kj.text( val )
-                this.$quantity.keyup()
-            }
+        this.__defineSetter__( 'kJs', function( kjs ) {
+            $modal.kJs = kjs
         } )
 
         this.__defineSetter__( 'iconId', function( id ) {
