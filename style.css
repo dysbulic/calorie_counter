@@ -62,8 +62,9 @@ th, td {
     background-position: center;
 }
 
-.kj, .calories, .opt-buttons {
+.calories {
     text-align: center;
+    padding-top: .5em;
 }
 
 #recipe {
@@ -105,11 +106,6 @@ th, td {
     margin-left: .75em;
 }
 
-.ingredients, .ingredients div {
-    padding: 0;
-    margin: 0;
-}
-
 .ingredients > div {
     border: 1px solid;
     border-style: none solid solid solid;
@@ -130,9 +126,9 @@ th, td {
 }
 
 .quantity {
-    width: 18.4% ! important;
+    width: 14.4% ! important;
 }
 
 .notes {
-    width: 25.4% ! important;
+    width: 28% ! important;
 }
