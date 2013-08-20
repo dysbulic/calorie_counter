@@ -152,14 +152,14 @@ $( function() {
     var rows = []
 
     function Row() {
-        this.$elem = $('<tr/>').addClass( 'ingredient' )
+        this.$elem = $('<div/>').addClass( 'row-fluid' )
         this.$suggest = $('<input/>').attr( { type: 'text' } )
-        this.$calories = $('<td/>').addClass( 'calories' )
+        this.$calories = $('<div/>').addClass( 'calories span1' )
         this.$quantity = $('<input/>').attr( { type: 'text' } )
         this.$units = get_$units()
+        this.$notes = $('<div/>').addClass( 'notes span3' )
         
-        var $kj = $('<td/>').addClass( 'kj' )
-        var $icon = $('<td/>').addClass( 'icon' )
+        var $icon = $('<div/>').addClass( 'icon span1' )
         
         var row = this
         
@@ -271,38 +271,41 @@ $( function() {
         this.$elem
             .append( $icon )
             .append(
-                $('<td/>').append(
-                    this.$suggest
-                        .suggest( {
-                            key: API_KEY,
-                            filter: '(all type:/food/ingredient)'
-                        } )
-                        .bind( 'fb-select', function( evt, data ) {
-                            $icon.attr( { id: data.id } )
-                            $kj.addClass( 'loading' )
-                            
-                            var query = {
-                                id: data.id,
-                                '/food/food/energy': null,
-                                '/common/topic/image': {
-                                    id: null,
-                                    limit: 1
+                $('<div/>')
+                    .addClass( 'span3' )
+                    .append(
+                        this.$suggest
+                            .suggest( {
+                                key: API_KEY,
+                                filter: '(all type:/food/ingredient)'
+                            } )
+                            .bind( 'fb-select', function( evt, data ) {
+                                $icon.attr( { id: data.id } )
+                                row.$calories.addClass( 'loading' )
+                                
+                                var query = {
+                                    id: data.id,
+                                    '/food/food/energy': null,
+                                    '/common/topic/image': {
+                                        id: null,
+                                        limit: 1
+                                    }
                                 }
-                            }
-                            
-                            freebase_query(
-                                query,
-                                function( response ) {
-                                    $kj.removeClass( 'loading' )
-
-                                    row.iconId = response.result['/common/topic/image'] && response.result['/common/topic/image'].id
-
-                                    row.kJs = response.result['/food/food/energy']
-                                } )
-                        } ) ) )
+                                
+                                freebase_query(
+                                    query,
+                                    function( response ) {
+                                        row.$calories.removeClass( 'loading' )
+                                        
+                                        row.iconId = response.result['/common/topic/image'] && response.result['/common/topic/image'].id
+                                        
+                                        row.kJs = response.result['/food/food/energy']
+                                    } )
+                            } ) )
+            )
             .append(
-                $('<td/>')
-                    .addClass( 'quantity' )
+                $('<div/>')
+                    .addClass( 'quantity span3' )
                     .append(
                         this.$quantity
                             .numeric()
@@ -319,7 +322,7 @@ $( function() {
                                             grams = ( new UnitConverter( $(this).val(), row.$units.val() ) ).as( 'g' ).val()
                                         }
                                         var toCalories = kcals * grams
-                                        row.$calories.text( Math.round( toCalories.as( 'kcal' ).val() ) )
+                                        row.$calories.text( Math.round( toCalories ) )
                                         row.$calories.change()
                                     } catch( e ) {
                                         console.error( e.message )
@@ -330,10 +333,10 @@ $( function() {
                             } )
                     )
                     .append( this.$units ) )
-            .append( $kj )
+            .append( this.$notes )
             .append( this.$calories )
             .append(
-                $('<td/>').addClass( 'opt-buttons' )
+                $('<div/>').addClass( 'controls span1' )
                     .append(
                         $('<div/>').addClass( 'btn-group' )
                             .append(
@@ -356,14 +359,6 @@ $( function() {
                             )   
                     )
             )
-
-        this.__defineGetter__( 'kJs', function() {
-            var kjs = $kj.text()
-            if( kjs == '?' ) {
-                return undefined
-            }
-            return kjs
-        } )
 
         this.__defineSetter__( 'kJs', function( kjs ) {
             $modal.kJs = kjs
@@ -393,7 +388,7 @@ $( function() {
     function addRow() {
         var row = new Row()
 
-        $('.recipe tbody').append( row.$elem )
+        $('.ingredients').append( row.$elem )
 
         var once = false
         row.$suggest.keyup( function() {

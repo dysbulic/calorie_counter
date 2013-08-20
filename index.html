@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="//getbootstrap.com/2.3.2/assets/css/bootstrap.css"/>
     <link rel="stylesheet" type="text/css" href="style.css" />
     <link rel="icon" type="image/svg+xml" href="//dhappy.org/.../image/vegetable/tomato/" />
+    <link rel="icon" type="image/png" href="//lh4.googleusercontent.com/-lOSFYps4xj8/UhPmr4lEphI/AAAAAAAAAUc/ZaocbxQpQIw/w272-h247-no/png" />
   </head>
   <body>
     <a href="//github.com/wholcomb/calorie_counter/tree/gh-pages/">
@@ -28,18 +29,18 @@
           </div>
         </div>
       </div>
+      <div class="row-fluid header">
+        <div class="icon span1"></div>
+        <div class="span3">Ingredient</div>
+        <div class="quantity span3">Quantity</div>
+        <div class="notes span3">Notes</div>
+        <div class="calories span1">Calories</div>
+        <div class="controls span1"></div>
+      </div>
+      <div class="ingredients row-fluid"></div>
       <div class="row-fluid">
-        <div class="span12">
-          <table class="recipe">
-            <thead>
-              <tr><th class="icon"></th><th>Ingredient</th><th>Quantity</th><th title="Kilojoules per 100 grams">kJ / 100g</th><th>Calories</th><th></th></tr>
-            </thead>
-            <tbody></tbody>
-            <tfoot>
-              <tr><td id="total" colspan="5"></td><td></td></tr>
-            </tfoot>
-          </table>
-        </div>
+        <div id="total" class="span11"></div>
+        <div class="span1"></div>
       </div>
       <div id="errors" class="row-fluid"></div>
     </div>
