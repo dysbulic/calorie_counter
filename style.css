@@ -67,6 +67,10 @@ th, td {
     padding-top: .5em;
 }
 
+.header .calories {
+    padding-top: 0em;
+}
+
 #recipe {
     width: 75%;
 }

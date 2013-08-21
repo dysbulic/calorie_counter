@@ -109,7 +109,8 @@ $( function() {
                         name: null,
                         optional: true
                     },
-                    quantity: null
+                    quantity: null,
+                    notes: null
                 }]
             }]
             
@@ -135,6 +136,7 @@ $( function() {
                                         row.iconId = ingredient.ingredient['/common/topic/image'] && ingredient.ingredient['/common/topic/image'].id
                                     }
 
+                                    row.$notes.text( ingredient.notes || '' )
                                     row.$quantity.val( ingredient.quantity )
                                     
                                     var unitId = ingredient.unit == null ? '' : ingredient.unit.id
