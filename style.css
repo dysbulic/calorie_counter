@@ -23,15 +23,7 @@ th, td {
 }
 
 .ingredient input {
-    text-indent: .5em;
-    padding: 0;
-    margin: 0;
     width: 100%;
-    border: none;
-}
-
-.ingredient td {
-    padding: .25em .5em;
 }
 
 .quantity input[type='text'] {

@@ -274,7 +274,7 @@ $( function() {
             .append( $icon )
             .append(
                 $('<div/>')
-                    .addClass( 'span3' )
+                    .addClass( 'ingredient span3' )
                     .append(
                         this.$suggest
                             .suggest( {
@@ -415,4 +415,8 @@ $( function() {
     }
 
     addRow()
+
+    $('.save').click( function() {
+        
+    } )
 } )
