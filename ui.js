@@ -417,6 +417,46 @@ $( function() {
     addRow()
 
     $('.save').click( function() {
-        
+        var REDIRECT = 'http://wholcomb.github.io/calorie_counter/oauthcallback.html'
+
+        var authURL = 'https://accounts.google.com/o/oauth2/auth'
+        authURL += '?response_type=token'
+        authURL += '&client_id=331203715716.apps.googleusercontent.com'
+        authURL += '&redirect_uri=' + REDIRECT
+        authURL += '&scope=https://www.googleapis.com/auth/freebase'
+        authURL += '&approval_prompt=auto'
+
+        var win = window.open( authURL, 'windowname1', 'width=800, height=600' )
+
+        var pollTimer = window.setInterval( function() {
+            try {
+                console.log( 'location', win.document.location.href )
+                console.log( 'url', win.document.URL )
+                if( win.document.URL.indexOf( REDIRECT ) != -1 ) {
+                    console.log( 'inside', win.document.URL )
+                    window.clearInterval( pollTimer )
+                    var url = win.document.URL
+                    acToken = gup( url, 'access_token' )
+                    tokenType = gup( url, 'token_type' )
+                    expiresIn = gup( url, 'expires_in' )
+                    win.close()
+
+                    //validateToken( acToken )
+                }
+            } catch( e ) {
+            }
+        }, 10 )
+
+        function gup( url, name ) {
+            name = name.replace( /[\[]/, '\\\[' ).replace( /[\]]/, '\\\]' )
+            var regexS = "[\\#&]" + name + "=([^&#]*)"
+            var regex = new RegExp( regexS )
+            var results = regex.exec( url )
+            if( results == null ) {
+                return ''
+            } else {
+                return results[1]
+            }
+        }
     } )
 } )
