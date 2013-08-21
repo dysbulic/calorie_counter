@@ -417,7 +417,8 @@ $( function() {
     addRow()
 
     $('.save').click( function() {
-        var REDIRECT = 'http://wholcomb.github.io/calorie_counter/oauthcallback.html'
+        var location = document.location.href
+        var REDIRECT = location.replace( /[^\/]*$/, '' ) + 'oauthcallback.html'
 
         var authURL = 'https://accounts.google.com/o/oauth2/auth'
         authURL += '?response_type=token'
@@ -426,26 +427,25 @@ $( function() {
         authURL += '&scope=https://www.googleapis.com/auth/freebase'
         authURL += '&approval_prompt=auto'
 
+        var acToken, tokenType, expiresIn
+
         var win = window.open( authURL, 'windowname1', 'width=800, height=600' )
 
         var pollTimer = window.setInterval( function() {
             try {
-                console.log( 'location', win.document.location.href )
-                console.log( 'url', win.document.URL )
-                if( win.document.URL.indexOf( REDIRECT ) != -1 ) {
-                    console.log( 'inside', win.document.URL )
+                var url = win.document.URL
+                if( url.indexOf( REDIRECT ) != -1 ) {
                     window.clearInterval( pollTimer )
-                    var url = win.document.URL
                     acToken = gup( url, 'access_token' )
                     tokenType = gup( url, 'token_type' )
                     expiresIn = gup( url, 'expires_in' )
                     win.close()
 
-                    //validateToken( acToken )
+                    validateToken( acToken )
                 }
             } catch( e ) {
             }
-        }, 10 )
+        }, 100 )
 
         function gup( url, name ) {
             name = name.replace( /[\[]/, '\\\[' ).replace( /[\]]/, '\\\]' )
@@ -457,6 +457,43 @@ $( function() {
             } else {
                 return results[1]
             }
+        }
+
+        var VALIDURL = 'https://www.googleapis.com/oauth2/v1/tokeninfo?access_token='
+
+        function validateToken(token) {
+            $.ajax( {
+                url: VALIDURL + token,
+                data: null,
+                success: function( response, responseText ) {  
+                    console.log( 'verified', arguments )
+                    if( responseText == 'success' ) {
+                        testWrite()
+                    }
+                },  
+                dataType: 'jsonp'
+            } )
+        }
+
+        function testWrite() {
+            var query = {
+                create: 'unless_exists',
+                id: null,
+                name: 'Nowhere At All',
+                type: '/location/location'
+            }
+
+            var freebaseURL = 'https://www.googleapis.com/freebase/v1sandbox/mqlwrite'
+            freebaseURL += "?oauth_token=" + acToken
+            freebaseURL += "&query=" + encodeURIComponent( JSON.stringify( query ) )
+
+            $.ajax( {
+                url: freebaseURL,
+                success: function( responseText ) {  
+                    console.log( 'written', arguments )
+                },  
+                dataType: 'jsonp'
+            } )
         }
     } )
 } )
