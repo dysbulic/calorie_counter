@@ -136,7 +136,7 @@ $( function() {
                                         row.iconId = ingredient.ingredient['/common/topic/image'] && ingredient.ingredient['/common/topic/image'].id
                                     }
 
-                                    row.$notes.text( ingredient.notes || '' )
+                                    row.$notes.val( ingredient.notes || '' )
                                     row.$quantity.val( ingredient.quantity )
                                     
                                     var unitId = ingredient.unit == null ? '' : ingredient.unit.id
@@ -159,7 +159,7 @@ $( function() {
         this.$calories = $('<div/>').addClass( 'calories span1' )
         this.$quantity = $('<input/>').attr( { type: 'text' } )
         this.$units = get_$units()
-        this.$notes = $('<div/>').addClass( 'notes span3' )
+        this.$notes = $('<textarea/>')
         
         var $icon = $('<div/>').addClass( 'icon span1' )
         
@@ -335,7 +335,9 @@ $( function() {
                             } )
                     )
                     .append( this.$units ) )
-            .append( this.$notes )
+            .append(
+                $('<div/>').addClass( 'notes span3' ).append( this.$notes )
+            )
             .append( this.$calories )
             .append(
                 $('<div/>').addClass( 'controls span1' )

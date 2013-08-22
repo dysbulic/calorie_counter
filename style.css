@@ -27,7 +27,7 @@ th, td {
 }
 
 .quantity input[type='text'] {
-    width: 3em;
+    width: 3.25em;
     margin-right: 5%;
 }
 
@@ -114,6 +114,11 @@ th, td {
 
 .header {
     border: 1px solid;
+    padding: .3em 0;
+}
+
+.header [class*="span"] {
+    min-height: 1em;
 }
 
 .controls {
@@ -127,4 +132,10 @@ th, td {
 
 .notes {
     width: 28% ! important;
+}
+
+.notes textarea {
+    height: 1.5em;
+    width: 100%;
+    margin: 0;
 }
