@@ -197,7 +197,7 @@ $( function() {
                     .append( $units )
             } )()
             
-            var $densityRow = ( function() {
+            function Density() {
                 var $weight = $('<input/>').attr( { type: 'text' } ).keypress( submitOnEnter ).numeric()
                 var $weightUnits = get_$units( { type: 'weight' } )
                 $weightUnits.val( '/en/gram' )
@@ -205,13 +205,22 @@ $( function() {
                 var $volume = $('<input/>').attr( { type: 'text' } ).keypress( submitOnEnter ).numeric()
                 var $volumeUnits = get_$units( { type: 'volume' } )
 
-                return $('<div/>')
-                    .append( $weight )
-                    .append( $weightUnits )
-                    .append( $('<span/>').text( 'per' ) )
-                    .append( $volume )
-                    .append( $volumeUnits )
-            } )()
+                this.__defineGetter__( 'gramsPercc', function() {
+                    console.log( 'gramsPercc' )
+                    return 1
+                } )
+
+                return this.$elem = (
+                    $('<div/>')
+                        .append( $weight )
+                        .append( $weightUnits )
+                        .append( $('<span/>').text( 'per' ) )
+                        .append( $volume )
+                        .append( $volumeUnits )
+                )
+            }
+
+            var density = new Density()
             
             var $modal = (
                 $('<div/>')
@@ -237,7 +246,7 @@ $( function() {
                             .append(
                                 $('<h3/>').text( 'Density' )
                             )
-                            .append( $densityRow )
+                            .append( density.$elem )
                             .append(
                                 $('<div/>').addClass( 'buttons' )
                                     .append(
@@ -251,14 +260,21 @@ $( function() {
                     )
             )
 
-            $modal.__defineGetter__( 'kcalsPerGram', function( kjs ) {
+            $modal.__defineGetter__( 'kcalsPerGram', function() {
                 return $calories.val() / $weight.val()
             } )
 
             $modal.__defineSetter__( 'kJs', function( kjs ) {
-                $calories.val( Math.round( ( new UnitConverter( kjs, 'kJ' ) ).as( 'kcal' ).val() ) )
-                $weight.val( '100' )
+                if( kjs != undefined && kjs != null ) {
+                    $calories.val( Math.round( ( new UnitConverter( kjs, 'kJ' ) ).as( 'kcal' ).val() ) )
+                    $weight.val( '100' )
+                } else {
+                    $calories.val( '' )
+                }
             } )
+
+            console.log( density.__lookupGetter__( 'gramsPercc' ) )
+            $modal.__defineGetter__( 'gramsPercc', density.__lookupGetter__( 'gramsPercc' ) )
 
             $('body').append( $modal )
 
