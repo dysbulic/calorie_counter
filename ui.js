@@ -46,11 +46,6 @@ $( function() {
                 } )
             }
         } )
-        var $wholeOpt = $('<option/>').val( '' ).text( 'whole' )
-        $units.find( '[label="volume"]' ).prepend( $wholeOpt )
-        if( options && options.type == 'volume' ) {
-            $units.prepend( $wholeOpt )
-        }
         
         if( ids.length > 0 ) {
             var query = [{
