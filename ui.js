@@ -1,9 +1,13 @@
 $( function() {
     var API_KEY = 'AIzaSyDqk53HcVbo2dP8ULc1qANB9Iejr7iXZOg'
+    var CLIENT_ID = '331203715716.apps.googleusercontent.com'
+    var SERVICE_URL = 'https://www.googleapis.com/freebase/v1'
+    SERVICE_URL = 'https://www.googleapis.com/freebase/v1sandbox'
 
     function freebase_query( query, handler ) {
         // From: https://developers.google.com/freebase/v1/mql-overview#mql-readwrite-documentation
         var fb_url = 'https://www.googleapis.com/freebase/v1/mqlread'
+        fb_url = 'https://www.googleapis.com/freebase/v1sandbox/mqlread'
         fb_url += "?query=" + encodeURIComponent( JSON.stringify( query ) )
             
         $.getJSON( fb_url, handler )
@@ -40,7 +44,7 @@ $( function() {
                     $parent.append(
                         $('<option/>').addClass( type ).val( id ).text( name )
                     )
-                    if( ! UnitConverter.hasUnit( id ) ) {
+                    if( id != '' && ! UnitConverter.hasUnit( id ) ) {
                         ids.push( id )
                     }
                 } )
@@ -77,6 +81,7 @@ $( function() {
     $('#recipe')
         .suggest( {
             key: API_KEY,
+            service_url: SERVICE_URL,
             filter: '(all type:/m/05v2c_w)'
         } )
         .bind( 'fb-select', function( evt, data ) {
@@ -113,36 +118,40 @@ $( function() {
                             function( response ) {
                                 $input.removeClass( 'loading' )
 
-                                $.each( rows, function( index, row ) {
-                                    if( row.empty ) {
-                                        row.remove()
-                                    }
-                                } )
+                                if( response.result[0] ) {
+                                    $.each( rows, function( index, row ) {
+                                        if( row.empty ) {
+                                            row.remove()
+                                        }
+                                    } )
+                                        
+                                        $.each( response.result[0]['/food/recipe/ingredients'], function( index, ingredient ) {
+                                            var row = addRow()
+                                            
+                                            if( ingredient.ingredient == null ) {
+                                                row.$suggest.val( 'Unspecified' )
+                                                row.kJs = null
+                                            } else {
+                                                row.$suggest.val( ingredient.ingredient.name )
+                                                row.kJs = ingredient.ingredient['/food/food/energy']
+                                                row.iconId = ingredient.ingredient['/common/topic/image'] && ingredient.ingredient['/common/topic/image'].id
+                                            }
+                                            
+                                            row.mId = ingredient.id
+                                            
+                                            row.$notes.val( ingredient.notes || '' )
+                                            row.$quantity.val( ingredient.quantity )
+                                            
+                                            var unitId = ingredient.unit == null ? '' : ingredient.unit.id
+                                            if( unitId == '/en/cup' ) { // Generic cups have no volumetric equivalent
+                                                unitId += '_us' // Default to US
+                                            }
+                                            row.$units.val( unitId )
+                                            row.$units.change()
+                                        } )
 
-                                $.each( response.result[0]['/food/recipe/ingredients'], function( index, ingredient ) {
-                                    var row = addRow()
-                                    
-                                    if( ingredient.ingredient == null ) {
-                                        row.$suggest.val( 'Unspecified' )
-                                        row.kJs = null
-                                    } else {
-                                        row.$suggest.val( ingredient.ingredient.name )
-                                        row.kJs = ingredient.ingredient['/food/food/energy']
-                                        row.iconId = ingredient.ingredient['/common/topic/image'] && ingredient.ingredient['/common/topic/image'].id
-                                    }
-
-                                    row.$notes.val( ingredient.notes || '' )
-                                    row.$quantity.val( ingredient.quantity )
-                                    
-                                    var unitId = ingredient.unit == null ? '' : ingredient.unit.id
-                                    if( unitId == '/en/cup' ) { // Generic cups have no volumetric equivalent
-                                        unitId += '_us' // Default to US
-                                    }
-                                    row.$units.val( unitId )
-                                    row.$units.change()
-                                } )
-
-                                addRow()
+                                        addRow()
+                                }
                             } )
         } )
 
@@ -210,7 +219,7 @@ $( function() {
                     return 1
                 } )
 
-                return this.$elem = (
+                this.$elem = (
                     $('<div/>')
                         .append( $weight )
                         .append( $weightUnits )
@@ -218,6 +227,8 @@ $( function() {
                         .append( $volume )
                         .append( $volumeUnits )
                 )
+
+                return this
             }
 
             var density = new Density()
@@ -273,8 +284,10 @@ $( function() {
                 }
             } )
 
-            console.log( density.__lookupGetter__( 'gramsPercc' ) )
-            $modal.__defineGetter__( 'gramsPercc', density.__lookupGetter__( 'gramsPercc' ) )
+            // $modal.__defineGetter__( 'gramsPercc', density.__lookupGetter__( 'gramsPercc' ) )
+            $modal.__defineGetter__( 'gramsPercc', function() {
+                return density.gramsPercc
+            } )
 
             $('body').append( $modal )
 
@@ -290,6 +303,7 @@ $( function() {
                         this.$suggest
                             .suggest( {
                                 key: API_KEY,
+                                service_url: SERVICE_URL,
                                 filter: '(all type:/food/ingredient)'
                             } )
                             .bind( 'fb-select', function( evt, data ) {
@@ -310,6 +324,8 @@ $( function() {
                                     function( response ) {
                                         row.$calories.removeClass( 'loading' )
                                         
+                                        row.mId = response.result.id
+
                                         row.iconId = response.result['/common/topic/image'] && response.result['/common/topic/image'].id
                                         
                                         row.kJs = response.result['/food/food/energy']
@@ -327,10 +343,9 @@ $( function() {
                                 if( kcals != undefined ) {
                                     try {
                                         var grams
-                                        if( row.$units.find(":selected").hasClass( 'volume' ) ) {
+                                        if( row.$units.find( ':selected' ).hasClass( 'volume' ) ) {
                                             var ccs = ( new UnitConverter( $(this).val(), row.$units.val() ) ).as( 'cc' ).val()
-                                            var density = 1
-                                            grams = ccs * density
+                                            grams = ccs * $modal.gramsPercc
                                         } else {
                                             grams = ( new UnitConverter( $(this).val(), row.$units.val() ) ).as( 'g' ).val()
                                         }
@@ -430,13 +445,22 @@ $( function() {
     addRow()
 
     $('.save').click( function() {
+        if( $('#recipe').val() == '' ) {
+            $('#recipe').parents( '.control-group' ).addClass( 'error' )
+            $('#recipe').focus()
+            return
+        } else {
+            $('#recipe').removeClass( 'error' )
+        }
+
+        // From: http://www.gethugames.in/proto/googleapi/
         var location = document.location.href
-        var REDIRECT = location.replace( /[^\/]*$/, '' ) + 'oauthcallback.html'
+        var redirect = location.replace( /[^\/]*$/, '' ) + 'oauthcallback.html'
 
         var authURL = 'https://accounts.google.com/o/oauth2/auth'
         authURL += '?response_type=token'
-        authURL += '&client_id=331203715716.apps.googleusercontent.com'
-        authURL += '&redirect_uri=' + REDIRECT
+        authURL += '&client_id=' + CLIENT_ID
+        authURL += '&redirect_uri=' + redirect
         authURL += '&scope=https://www.googleapis.com/auth/freebase'
         authURL += '&approval_prompt=auto'
 
@@ -447,7 +471,7 @@ $( function() {
         var pollTimer = window.setInterval( function() {
             try {
                 var url = win.document.URL
-                if( url.indexOf( REDIRECT ) != -1 ) {
+                if( url.indexOf( redirect ) != -1 ) {
                     window.clearInterval( pollTimer )
                     acToken = gup( url, 'access_token' )
                     tokenType = gup( url, 'token_type' )
@@ -481,20 +505,28 @@ $( function() {
                 success: function( response, responseText ) {  
                     console.log( 'verified', arguments )
                     if( responseText == 'success' ) {
-                        testWrite()
+                        saveRecipe()
                     }
                 },  
                 dataType: 'jsonp'
             } )
         }
 
-        function testWrite() {
-            var query = {
-                create: 'unless_exists',
-                id: null,
-                name: 'Nowhere At All',
-                type: '/location/location'
-            }
+        function saveRecipe() {
+            var query = [
+                {
+                    create: 'unless_exists',
+                    id: null,
+                    name: $('#recipe').val(),
+                    type: '/food/recipe/dish'
+                },
+                {
+                    create: 'unless_exists',
+                    id: null,
+                    name: $('#recipe').val(),
+                    type: '/food/recipe'
+                }
+            ]
 
             var freebaseURL = 'https://www.googleapis.com/freebase/v1sandbox/mqlwrite'
             freebaseURL += "?oauth_token=" + acToken
@@ -502,7 +534,51 @@ $( function() {
 
             $.ajax( {
                 url: freebaseURL,
-                success: function( responseText ) {  
+                success: function( response, responseText ) {  
+                    console.log( 'written', arguments )
+                    if( responseText == 'success' ) {
+                        linkRecipe( response.result[0].id, response.result[1].id )
+                    }
+                },  
+                dataType: 'jsonp'
+            } )
+        }
+
+        function linkRecipe( dishId, recipeId ) {
+            var query = [
+                {
+                    id: recipeId,
+                    '/food/recipe/dish': {
+                        connect: 'insert',
+                        id: dishId
+                    }
+                }
+            ]
+
+            $.each( rows, function( idx, row ) {
+                if( ! row.empty ) {
+                    query.push( {
+                        id: recipeId,
+                        '/food/recipe/ingredients': {
+                            create: 'unless_exists',
+                            id: null,
+                            quantity: parseFloat( row.$quantity.val() ),
+                            unit: row.$units.val(),
+                            ingredient: row.mId
+                        }
+                    } )
+                }
+            } )
+
+            $('#errors').text( JSON.stringify( query ) )
+
+            var freebaseURL = 'https://www.googleapis.com/freebase/v1sandbox/mqlwrite'
+            freebaseURL += "?oauth_token=" + acToken
+            freebaseURL += "&query=" + encodeURIComponent( JSON.stringify( query ) )
+
+            $.ajax( {
+                url: freebaseURL,
+                success: function( response, responseText ) {  
                     console.log( 'written', arguments )
                 },  
                 dataType: 'jsonp'

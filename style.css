@@ -121,7 +121,7 @@ th, td {
     min-height: 1em;
 }
 
-.controls {
+.header .controls, .ingredient .controls {
     width: 9.38% ! important;
     text-align: center;
 }
@@ -138,4 +138,8 @@ th, td {
     height: 1.5em;
     width: 100%;
     margin: 0;
+}
+
+label {
+    display: inline;
 }
