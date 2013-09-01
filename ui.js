@@ -77,6 +77,72 @@ $( function() {
         return $units
     }
     
+    var $dishModal = ( function() {
+        var $input = $('<input/>').attr( { type: 'text' } ).addClass( 'dish' )
+
+        var $okButton = (
+            $('<a/>').addClass( 'btn btn-primary' ).text( 'Save' )
+                .click( saveRecipe )
+        )
+
+        var $modal = (
+            $('<div/>')
+                .addClass( 'modal fade' )
+                .css( { display: 'none' } )
+                .append(
+                    $('<div/>').addClass( 'modal-header' )
+                        .append( 
+                            $('<button/>')
+                                .addClass( 'close' )
+                                .attr( { 'data-dismiss': 'modal' } )
+                                .text( '×' )
+                        )
+                        .append( 
+                            $('<h3/>').text( 'Dish' )
+                        )
+                    )
+                    .append(
+                        $('<div/>')
+                            .attr( { id: 'dish-modal' } )
+                            .addClass( 'modal-body' )
+                            .append( $input )
+                            .append(
+                                $('<div/>').addClass( 'buttons' )
+                                    .append(
+                                        $('<a/>').addClass( 'btn' ).text( 'Cancel' )
+                                            .click( function() {
+                                                $modal.modal( 'hide' )
+                                            } )
+                                    )
+                                    .append( $okButton )
+                            )
+                    )
+        )
+        
+        $('body').append( $modal )
+
+        $input.suggest( {
+            key: API_KEY,
+            service_url: SERVICE_URL,
+            filter: '(all type:/food/dish)',
+            parent: '#dish-modal'
+        } )
+
+        $input.bind( 'fb-select', function( evt, data ) {
+            $modal.dishId = data.id
+        } )
+
+        $modal.__defineGetter__( 'dishName', function() {
+            return $input.val()
+        } )
+
+        $modal.__defineSetter__( 'dishName', function( name ) {
+            $input.val( name )
+        } )
+
+        return $modal
+    } )()
+
     $('#recipe')
         .suggest( {
             key: API_KEY,
@@ -88,8 +154,14 @@ $( function() {
 
             $input.addClass( 'loading' )
 
+            $('#recipe').data( 'recipeId', data.id )
+
             var query = [{
                 id: data.id,
+                '/food/recipe/dish': {
+                    id: null,
+                    name: null
+                },
                 '/food/recipe/ingredients': [{
                     id: null,
                     ingredient: {
@@ -119,14 +191,18 @@ $( function() {
 
                                 console.log( response )
 
-                                if( response.result[0] ) {
+                                var result = response.result[0]
+                                if( result ) {
+                                    $dishModal.dishId = result['/food/recipe/dish'].id
+                                    $dishModal.dishName = result['/food/recipe/dish'].name
+
                                     $.each( rows, function( index, row ) {
                                         if( row.empty ) {
                                             row.remove()
                                         }
                                     } )
                                         
-                                    $.each( response.result[0]['/food/recipe/ingredients'], function( index, ingredient ) {
+                                    $.each( result['/food/recipe/ingredients'], function( index, ingredient ) {
                                         var row = addRow()
                                         
                                         if( ingredient.ingredient == null ) {
@@ -455,7 +531,11 @@ $( function() {
         } else {
             $('#recipe').parents( '.control-group' ).removeClass( 'error' )
         }
+        
+        $dishModal.modal()
+    } )
 
+    function saveRecipe() {
         // From: http://www.gethugames.in/proto/googleapi/
         var location = document.location.href
         var redirectURL = location.replace( /[^\/]*$/, '' ) + 'oauthcallback.html'
@@ -515,43 +595,49 @@ $( function() {
         }
 
         function saveRecipe() {
-            var query = [
-                {
+            var query = []
+
+            if( ! $dishModal.dishId || ! $('#recipe').data( 'recipeId') ) {
+                query.push( {
                     create: 'unless_exists',
                     id: null,
-                    name: $('#recipe').val(),
+                    name: $dishModal.dishName,
                     type: '/food/recipe/dish'
-                },
-                {
+                } )
+                query.push( {
                     create: 'unless_exists',
                     id: null,
                     name: $('#recipe').val(),
                     type: '/food/recipe'
-                }
-            ]
+                } )
+            }
 
-            var freebaseURL = SERVICE_URL + '/mqlwrite'
-            freebaseURL += "?oauth_token=" + oauthToken
-            freebaseURL += "&query=" + encodeURIComponent( JSON.stringify( query ) )
-
-            $.ajax( {
-                url: freebaseURL,
-                success: function( response, responseText ) {  
-                    console.log( 'written', arguments )
-                    if( responseText == 'success' ) {
-                        linkRecipe( response.result[0].id, response.result[1].id )
-                    }
-                },  
-                dataType: 'jsonp'
-            } )
+            if( query.length == 0 ) {
+                updateRecipe( $dishModal.dishId, $('#recipe').data( 'recipeId') )
+            } else {
+                var freebaseURL = SERVICE_URL + '/mqlwrite'
+                freebaseURL += "?oauth_token=" + oauthToken
+                freebaseURL += "&query=" + encodeURIComponent( JSON.stringify( query ) )
+                
+                $.ajax( {
+                    url: freebaseURL,
+                    success: function( response, responseText ) {  
+                        console.log( 'written', arguments )
+                        if( responseText == 'success' ) {
+                            updateRecipe( response.result[0].id, response.result[1].id )
+                        }
+                    },  
+                    dataType: 'jsonp'
+                } )
+            }
         }
 
-        function linkRecipe( dishId, recipeId ) {
+        function updateRecipe( dishId, recipeId ) {
             var query = [
                 {
                     id: recipeId,
                     '/food/recipe/dish': {
-                        connect: 'insert',
+                        connect: 'replace',
                         id: dishId
                     }
                 }
@@ -562,26 +648,34 @@ $( function() {
                     if( row.rowId ) {
                         query.push( {
                             id: recipeId,
+                            '/food/recipe/ingredients': [{
+                                id: row.rowId,
+                                quantity: {
+                                    connect: 'update',
+                                    value: parseFloat( row.$quantity.val() )
+                                },
+                                unit: {
+                                    connect: 'update',
+                                    id: row.$units.val()
+                                }
+                            }]
+                        } )
+                    } else {
+                        query.push( {
+                            id: recipeId,
                             '/food/recipe/ingredients': {
-                                connect: 'delete',
-                                id: row.rowId
+                                create: 'unless_exists',
+                                id: null,
+                                quantity: parseFloat( row.$quantity.val() ),
+                                unit: {
+                                    id: row.$units.val()
+                                },
+                                ingredient: {
+                                    id: row.ingredientId
+                                }
                             }
                         } )
                     }
-                    query.push( {
-                        id: recipeId,
-                        '/food/recipe/ingredients': {
-                            create: 'unless_exists',
-                            id: null,
-                            quantity: parseFloat( row.$quantity.val() ),
-                            unit: {
-                                id: row.$units.val()
-                            },
-                            ingredient: {
-                                id: row.ingredientId
-                            }
-                        }
-                    } )
                 }
             } )
 
@@ -599,5 +693,5 @@ $( function() {
                 dataType: 'jsonp'
             } )
         }
-    } )
+    }
 } )

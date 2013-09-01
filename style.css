@@ -143,3 +143,21 @@ th, td {
 label {
     display: inline;
 }
+
+#dish-modal input {
+    width: 97%;
+}
+
+#dish-modal .fbs-pane {
+    position: relative;
+    top: -2.5em;
+}
+
+#dish-modal .fbs-pane * {
+    text-align: left;
+}
+
+#recipe {
+    position: relative;
+    top: .25em;
+}
