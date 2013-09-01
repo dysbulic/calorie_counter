@@ -185,7 +185,8 @@ $( function() {
                     },
                     quantity: null,
                     notes: null
-                }]
+                }],
+                '/common/topic/description': null
             }]
             
             freebase_query( query,
@@ -204,6 +205,8 @@ $( function() {
                                             row.remove()
                                         }
                                     } )
+
+                                    $('#description textarea').val( result['/common/topic/description'] )
                                         
                                     $.each( result['/food/recipe/ingredients'], function( index, ingredient ) {
                                         var row = addRow()
@@ -222,7 +225,7 @@ $( function() {
                                         
                                         row.$notes.val( ingredient.notes || '' )
                                         row.$quantity.val( ingredient.quantity )
-                                        
+
                                         var unitId = ingredient.unit == null ? '' : ingredient.unit.id
                                         if( unitId == '/en/cup' ) { // Generic cups have no volumetric equivalent
                                             unitId += '_us' // Default to US
