@@ -82,7 +82,10 @@ $( function() {
 
         var $okButton = (
             $('<a/>').addClass( 'btn btn-primary' ).text( 'Save' )
-                .click( saveRecipe )
+                .click( function() {
+                    $modal.modal( 'hide' )
+                    saveRecipe()
+                } )
         )
 
         var $modal = (
@@ -678,8 +681,6 @@ $( function() {
                     }
                 }
             } )
-
-            $('#errors').text( JSON.stringify( query ) )
 
             var freebaseURL = SERVICE_URL + '/mqlwrite'
             freebaseURL += "?oauth_token=" + oauthToken
