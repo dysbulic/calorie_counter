@@ -246,7 +246,9 @@ $( function() {
                                         }
                                     } )
 
-                                    $('#description textarea').val( result['/common/topic/description'] )
+                                    $('#description textarea')
+                                        .val( result['/common/topic/description'] )
+                                        .change()
                                         
                                     $.each( result['/food/recipe/ingredients'], function( index, ingredient ) {
                                         var row = addRow()
@@ -736,4 +738,17 @@ $( function() {
             } )
         }
     }
+
+    // From: http://stackoverflow.com/questions/7477/autosizing-textarea-using-prototype
+    function autoSize() {
+        var text = $('#description textarea').val().replace( /\n/g, '<br/>' )
+        console.log( 'autosizing', text )
+        $('#resizeCopy').html( text )
+    }
+    
+    $('#description textarea')
+        .change( autoSize )
+        .keydown( autoSize )
+        .keyup( autoSize )
+    autoSize()
 } )
