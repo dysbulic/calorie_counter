@@ -6,10 +6,43 @@ $( function() {
 
     function freebase_query( query, handler ) {
         // From: https://developers.google.com/freebase/v1/mql-overview#mql-readwrite-documentation
-        var fb_url = SERVICE_URL + '/mqlread'
-        fb_url += "?query=" + encodeURIComponent( JSON.stringify( query ) )
+        var freebaseURL = SERVICE_URL + '/mqlread'
+        freebaseURL += "?query=" + encodeURIComponent( JSON.stringify( query ) )
             
-        $.getJSON( fb_url, handler )
+        $.getJSON( freebaseURL, handler )
+    }
+
+    function freebase_write( oauthToken, query, handler ) {
+        // Maximum url length is ~2000 characters and JSONP can't use POST
+
+        $('#errors').text( JSON.stringify( query ) )
+
+        var toSend = []
+        while( query.length > 0 ) {
+            var test = toSend.slice( 0 )
+            test.push( query[0] )
+
+            if( test.length == 1 || encodeURIComponent( JSON.stringify( test ) ).length < 1900 ) {
+                toSend = test
+                query.shift()
+                console.log( query, toSend, encodeURIComponent( JSON.stringify( test ) ).length )
+                if( query.length > 0 ) {
+                    continue
+                }
+            }
+
+            var freebaseURL = SERVICE_URL + '/mqlwrite'
+            freebaseURL += "?oauth_token=" + oauthToken
+            freebaseURL += "&query=" + encodeURIComponent( JSON.stringify( toSend ) )
+                        
+            $.ajax( {
+                url: freebaseURL,
+                success: handler,
+                dataType: 'jsonp'
+            } )
+            
+            toSend = []
+        }
     }
 
     var unitsCategories
@@ -25,6 +58,7 @@ $( function() {
                 }
             } )
         }
+
         var ids = []
 
         $.each( unitsCategories, function( type, units ) {
@@ -78,7 +112,7 @@ $( function() {
     }
     
     var $dishModal = ( function() {
-        var $input = $('<input/>').attr( { type: 'text' } ).addClass( 'dish' )
+        var $input = $('<input/>').attr( { type: 'text' } ).addClass( 'dish' ).keypress( submitOnEnter )
 
         var $okButton = (
             $('<a/>').addClass( 'btn btn-primary' ).text( 'Save' )
@@ -87,6 +121,12 @@ $( function() {
                     saveRecipe()
                 } )
         )
+
+        function submitOnEnter( evt ) {
+            if( evt.which == 13 ) {
+                $okButton.click()
+            }
+        }
 
         var $modal = (
             $('<div/>')
@@ -621,19 +661,11 @@ $( function() {
             if( query.length == 0 ) {
                 updateRecipe( $dishModal.dishId, $('#recipe').data( 'recipeId') )
             } else {
-                var freebaseURL = SERVICE_URL + '/mqlwrite'
-                freebaseURL += "?oauth_token=" + oauthToken
-                freebaseURL += "&query=" + encodeURIComponent( JSON.stringify( query ) )
-                
-                $.ajax( {
-                    url: freebaseURL,
-                    success: function( response, responseText ) {  
-                        console.log( 'written', arguments )
-                        if( responseText == 'success' ) {
-                            updateRecipe( response.result[0].id, response.result[1].id )
-                        }
-                    },  
-                    dataType: 'jsonp'
+                freebase_write( oauthToken, query, function( response, responseText ) {  
+                    console.log( 'written', arguments )
+                    if( responseText == 'success' ) {
+                        updateRecipe( response.result[0].id, response.result[1].id )
+                    }
                 } )
             }
         }
@@ -649,6 +681,15 @@ $( function() {
                 }
             ]
 
+            query.push( {
+                id: recipeId,
+                '/common/topic/description': {
+                    connect: 'replace',
+                    value: $('#description textarea').val(),
+                    lang: '/lang/en'
+                }
+            } )
+
             $.each( rows, function( idx, row ) {
                 if( ! row.empty ) {
                     if( row.rowId ) {
@@ -663,6 +704,11 @@ $( function() {
                                 unit: {
                                     connect: 'update',
                                     id: row.$units.val()
+                                },
+                                notes: {
+                                    connect: 'update',
+                                    value: row.$notes.val(),
+                                    lang: '/lang/en'
                                 }
                             }]
                         } )
@@ -685,16 +731,8 @@ $( function() {
                 }
             } )
 
-            var freebaseURL = SERVICE_URL + '/mqlwrite'
-            freebaseURL += "?oauth_token=" + oauthToken
-            freebaseURL += "&query=" + encodeURIComponent( JSON.stringify( query ) )
-
-            $.ajax( {
-                url: freebaseURL,
-                success: function( response, responseText ) {  
-                    console.log( 'written', arguments )
-                },  
-                dataType: 'jsonp'
+            freebase_write( oauthToken, query, function( response, responseText ) {  
+                console.log( 'written', arguments )
             } )
         }
     }
