@@ -14,9 +14,6 @@ $( function() {
 
     function freebase_write( oauthToken, query, handler ) {
         // Maximum url length is ~2000 characters and JSONP can't use POST
-
-        $('#errors').text( JSON.stringify( query ) )
-
         var toSend = []
         while( query.length > 0 ) {
             var test = toSend.slice( 0 )
@@ -25,7 +22,6 @@ $( function() {
             if( test.length == 1 || encodeURIComponent( JSON.stringify( test ) ).length < 1900 ) {
                 toSend = test
                 query.shift()
-                console.log( query, toSend, encodeURIComponent( JSON.stringify( test ) ).length )
                 if( query.length > 0 ) {
                     continue
                 }
@@ -233,8 +229,6 @@ $( function() {
                             function( response ) {
                                 $input.removeClass( 'loading' )
 
-                                console.log( response )
-
                                 var result = response.result[0]
                                 if( result ) {
                                     $dishModal.dishId = result['/food/recipe/dish'].id
@@ -246,8 +240,10 @@ $( function() {
                                         }
                                     } )
 
+                                    var recipe = result['/common/topic/description']
                                     $('#description textarea')
-                                        .val( result['/common/topic/description'] )
+                                        .val( recipe )
+                                        .data( 'origText', recipe )
                                         .change()
                                         
                                     $.each( result['/food/recipe/ingredients'], function( index, ingredient ) {
@@ -683,14 +679,28 @@ $( function() {
                 }
             ]
 
-            query.push( {
-                id: recipeId,
-                '/common/topic/description': {
-                    connect: 'replace',
-                    value: $('#description textarea').val(),
-                    lang: '/lang/en'
-                }
-            } )
+            var origRecipe = $('#description textarea').data( 'origText' )
+            var newRecipe = $('#description textarea').val()
+
+            if( origRecipe != newRecipe ) {
+                query.push( {
+                    id: recipeId,
+                    '/common/topic/description': {
+                        connect: 'delete',
+                        value: origRecipe,
+                        lang: '/lang/en'
+                    }
+                } )
+
+                query.push( {
+                    id: recipeId,
+                    '/common/topic/description': {
+                        connect: 'insert',
+                        value: newRecipe,
+                        lang: '/lang/en'
+                    }
+                } )
+            }
 
             $.each( rows, function( idx, row ) {
                 if( ! row.empty ) {
@@ -742,7 +752,6 @@ $( function() {
     // From: http://stackoverflow.com/questions/7477/autosizing-textarea-using-prototype
     function autoSize() {
         var text = $('#description textarea').val().replace( /\n/g, '<br/>' )
-        console.log( 'autosizing', text )
         $('#resizeCopy').html( text )
     }
     
